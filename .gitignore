@@ -1,0 +1,11 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+uploads/
+*.ipynb
+*.csv
+*.jpg
+*.png
+*.save

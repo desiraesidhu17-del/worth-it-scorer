@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How scores are calculated — worth it?</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <style>
+    .method-section { margin-bottom: 48px; }
+    .method-section h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      letter-spacing: -0.01em;
+    }
+    .method-section h3 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 20px 0 8px;
+    }
+    .method-section p, .method-section li {
+      font-size: 0.92rem;
+      color: var(--muted);
+      line-height: 1.65;
+      margin-bottom: 10px;
+    }
+    .method-section ul { padding-left: 20px; }
+    .method-section li { margin-bottom: 6px; }
+
+    .fiber-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      margin-top: 12px;
+    }
+    .fiber-table th {
+      text-align: left;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-size: 0.72rem;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .fiber-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+      vertical-align: top;
+    }
+    .fiber-table td:first-child { color: var(--text); font-weight: 500; }
+    .fiber-table tr:last-child td { border-bottom: none; }
+
+    .score-pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .pill-green { background: rgba(64,200,122,0.12); color: var(--green); }
+    .pill-yellow { background: rgba(232,184,64,0.12); color: var(--yellow); }
+    .pill-red { background: rgba(232,64,64,0.12); color: var(--red); }
+
+    .formula-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--text);
+      margin: 12px 0;
+      line-height: 1.8;
+    }
+    .formula-box .comment { color: var(--muted); font-style: italic; }
+
+    .weight-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-top: 12px;
+      font-size: 0.8rem;
+    }
+    .weight-cell {
+      background: var(--surface);
+      padding: 10px 12px;
+    }
+    .weight-cell.header {
+      background: var(--bg);
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-size: 0.72rem;
+    }
+    .weight-cell.category-name { color: var(--text); font-weight: 500; }
+    .version-tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-left: 8px;
+      font-family: var(--mono);
+      vertical-align: middle;
+    }
+
+    @media (max-width: 520px) {
+      .weight-grid { grid-template-columns: repeat(2, 1fr); }
+      .weight-grid .weight-cell.header:nth-child(n+3) { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="/" class="logo">worth it?</a>
+    <span class="tagline">methodology</span>
+  </header>
+
+  <main style="max-width: 720px;">
+
+    <div class="method-section" style="margin-top: 8px; margin-bottom: 32px;">
+      <p style="font-size: 1rem; color: var(--text); line-height: 1.6;">
+        Every score on this site is derived from published fiber science, not opinion.
+        This page documents exactly how scores are calculated so you can scrutinize the methodology,
+        identify where confidence is limited, and hold us accountable.
+        <span class="version-tag">v1.0</span>
+      </p>
+    </div>
+
+    <!-- ── What scores measure ───────────────────────────────────────────── -->
+    <div class="method-section">
+      <h2>What scores measure — and what they don't</h2>
+      <p>
+        <strong style="color: var(--text);">What fiber science can tell you</strong> (high confidence):
+        how a specific fiber composition behaves over time — pilling rate, tensile strength,
+        colorfastness, moisture management. These properties are measurable by ASTM standards
+        and are consistent across garments made from the same fiber.
+      </p>
+      <p>
+        <strong style="color: var(--text);">What fiber science cannot tell you</strong>:
+        how well a specific garment was constructed.
+        A $20 cotton t-shirt and a $120 cotton t-shirt share the same fiber score.
+        Construction quality — seam type, stitch density, lining — requires physical inspection
+        and is not captured in the Material Durability score.
+      </p>
+      <p>
+        <strong style="color: var(--text);">What price pressure tells you</strong>:
+        whether the price you're paying is appropriate for the fiber quality you're getting.
+        Price benchmarks are anchored to value retailers (Uniqlo, Target), not to what brands
+        typically charge for that fiber. A $148 acrylic sweater is compared against what that
+        composition actually costs to produce at fair margin — not against the average market
+        price for sweaters.
+      </p>
+    </div>
+
+    <!-- ── Material durability score ─────────────────────────────────────── -->
+    <div class="method-section">
+      <h2>Material Durability Score</h2>
+
+      <h3>Fiber properties</h3>
+      <p>
+        Each fiber is assigned four property scores (0–100, higher = better performance)
+        sourced from ASTM test standards and Lenzing AG technical data sheets:
+      </p>
+      <ul>
+        <li><strong style="color:var(--text)">Pilling resistance</strong> — ASTM D4970/D4970M-22. How readily the fiber surface forms pills under abrasion.</li>
+        <li><strong style="color:var(--text)">Tensile strength</strong> — ASTM D5034. Force required to break a fabric sample; proxy for tear and wear resistance.</li>
+        <li><strong style="color:var(--text)">Colorfastness</strong> — ASTM D4838. Resistance to fading from washing, light, and rubbing.</li>
+        <li><strong style="color:var(--text)">Moisture management</strong> — Absorbency and wicking relative to the garment category.</li>
+      </ul>
+
+      <h3>Selected fiber scores</h3>
+      <table class="fiber-table">
+        <thead>
+          <tr>
+            <th>Fiber</th>
+            <th>Pilling</th>
+            <th>Tensile</th>
+            <th>Colorfast</th>
+            <th>Moisture</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Polyester</td><td>85</td><td>90</td><td>80</td><td>20</td></tr>
+          <tr><td>Nylon</td><td>80</td><td>95</td><td>75</td><td>30</td></tr>
+          <tr><td>Acrylic</td><td>20</td><td>50</td><td>85</td><td>15</td></tr>
+          <tr><td>Cotton</td><td>45</td><td>60</td><td>75</td><td>90</td></tr>
+          <tr><td>Linen</td><td>55</td><td>80</td><td>70</td><td>90</td></tr>
+          <tr><td>Wool</td><td>55</td><td>65</td><td>60</td><td>90</td></tr>
+          <tr><td>Merino</td><td>60</td><td>65</td><td>62</td><td>92</td></tr>
+          <tr><td>Cashmere</td><td>25</td><td>50</td><td>55</td><td>80</td></tr>
+          <tr><td>Viscose / Rayon</td><td>30</td><td>40</td><td>65</td><td>75</td></tr>
+          <tr><td>Modal</td><td>55</td><td>55</td><td>70</td><td>80</td></tr>
+          <tr><td>Lyocell / Tencel</td><td>60</td><td>60</td><td>75</td><td>85</td></tr>
+          <tr><td>Silk</td><td>45</td><td>55</td><td>60</td><td>75</td></tr>
+          <tr><td>Elastane / Spandex</td><td>70</td><td>40</td><td>70</td><td>20</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Blend scoring</h3>
+      <p>
+        Blended garments are not scored as a simple weighted average — certain combinations
+        produce interaction effects that differ from the component fibers alone.
+        For example, polyester blended with cotton produces better pilling resistance than
+        either fiber's weighted average because the polyester fibers reinforce the cotton
+        surface. Known interactions are applied as adjustments to the weighted base score.
+      </p>
+
+      <h3>Category weights</h3>
+      <p>
+        Different garment types place different demands on fibers.
+        Pilling matters most in sweaters (worn against skin and other surfaces repeatedly).
+        Tensile strength matters most in jeans (stress at seams, stretch zones).
+        Each category weights the four properties accordingly:
+      </p>
+      <div class="weight-grid">
+        <div class="weight-cell header">Category</div>
+        <div class="weight-cell header">Pilling</div>
+        <div class="weight-cell header">Tensile</div>
+        <div class="weight-cell header">Color</div>
+        <div class="weight-cell category-name">Sweater</div><div class="weight-cell">45%</div><div class="weight-cell">25%</div><div class="weight-cell">20%</div>
+        <div class="weight-cell category-name">T-shirt</div><div class="weight-cell">30%</div><div class="weight-cell">35%</div><div class="weight-cell">20%</div>
+        <div class="weight-cell category-name">Dress</div><div class="weight-cell">30%</div><div class="weight-cell">25%</div><div class="weight-cell">30%</div>
+        <div class="weight-cell category-name">Jeans</div><div class="weight-cell">15%</div><div class="weight-cell">45%</div><div class="weight-cell">30%</div>
+        <div class="weight-cell category-name">Outerwear</div><div class="weight-cell">25%</div><div class="weight-cell">35%</div><div class="weight-cell">25%</div>
+        <div class="weight-cell category-name">Activewear</div><div class="weight-cell">20%</div><div class="weight-cell">30%</div><div class="weight-cell">20%</div>
+      </div>
+    </div>
+
+    <!-- ── Price pressure ─────────────────────────────────────────────────── -->
+    <div class="method-section">
+      <h2>Price Pressure</h2>
+      <p>
+        Price pressure compares the asking price against a benchmark range for the garment's
+        material durability score and category.
+        Benchmarks are anchored to value retailers — what a garment with this fiber profile
+        actually costs from a quality-focused value brand like Uniqlo or Target.
+        This is not what the brand charges; it is what the composition justifies.
+      </p>
+      <p>Price pressure levels:</p>
+      <ul>
+        <li><span class="score-pill pill-green">Low</span> — price is within or below the benchmark range</li>
+        <li><span class="score-pill pill-yellow">Moderate</span> — up to 50% above benchmark</li>
+        <li><span class="score-pill pill-red">High</span> — 50–150% above benchmark</li>
+        <li><span class="score-pill pill-red">Extreme</span> — more than 150% above benchmark</li>
+      </ul>
+    </div>
+
+    <!-- ── Worth-It Score ─────────────────────────────────────────────────── -->
+    <div class="method-section">
+      <h2>Worth-It Score</h2>
+      <div class="formula-box">
+        Worth-It Score = Material Score − Price Pressure Penalty<br>
+        <span class="comment">
+          Penalty: Low = 0 pts &nbsp;·&nbsp; Moderate = 5 pts &nbsp;·&nbsp;
+          High = 15 pts &nbsp;·&nbsp; Extreme = 25 pts
+        </span>
+      </div>
+      <p>
+        A high material score with low price pressure produces a high Worth-It Score.
+        The same fiber composition at triple the fair price produces a low one.
+        Score bands:
+      </p>
+      <ul>
+        <li><span class="score-pill pill-green">66–100</span> — Good to excellent value</li>
+        <li><span class="score-pill pill-yellow">41–65</span> — Average — price premium may or may not be justified</li>
+        <li><span class="score-pill pill-red">0–40</span> — You are paying a significant premium for the fiber quality you're getting</li>
+      </ul>
+    </div>
+
+    <!-- ── Cost per wash ───────────────────────────────────────────────────── -->
+    <div class="method-section">
+      <h2>Cost Per Wash</h2>
+      <p>
+        Instead of claiming what a garment "should" cost — a claim we cannot defend
+        without knowing manufacturing costs — we show how much you pay per wash cycle.
+        Estimated wash cycle lifespan is derived from the Worth-It Score band:
+      </p>
+      <table class="fiber-table">
+        <thead><tr><th>Score band</th><th>Estimated wash cycles</th><th>Example at $100</th></tr></thead>
+        <tbody>
+          <tr><td><span class="score-pill pill-green">81–100</span></td><td>200–400</td><td>$0.25–$0.50 / wash</td></tr>
+          <tr><td><span class="score-pill pill-green">66–80</span></td><td>100–200</td><td>$0.50–$1.00 / wash</td></tr>
+          <tr><td><span class="score-pill pill-yellow">46–65</span></td><td>50–100</td><td>$1.00–$2.00 / wash</td></tr>
+          <tr><td><span class="score-pill pill-red">26–45</span></td><td>25–50</td><td>$2.00–$4.00 / wash</td></tr>
+          <tr><td><span class="score-pill pill-red">0–25</span></td><td>15–25</td><td>$4.00–$6.67 / wash</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top: 12px;">
+        Wash cycle estimates represent typical performance for the fiber class, not a guarantee
+        for any specific garment. Construction quality, care behavior, and wear frequency all
+        affect actual lifespan.
+      </p>
+    </div>
+
+    <!-- ── Confidence ─────────────────────────────────────────────────────── -->
+    <div class="method-section">
+      <h2>Confidence Levels</h2>
+      <p>
+        Not all inputs produce equally reliable scores. Confidence is assessed from three signals:
+      </p>
+      <ul>
+        <li><strong style="color:var(--text)">High</strong> — full composition listed with percentages, all fibers recognized</li>
+        <li><strong style="color:var(--text)">Medium</strong> — known fibers but blend interactions are uncharacterized, or GSM is unknown for weight-sensitive fibers like cotton</li>
+        <li><strong style="color:var(--text)">Low</strong> — unknown fibers in the composition, or no composition data provided</li>
+      </ul>
+      <p>
+        Confidence affects how much weight you should place on the score.
+        A Low confidence score reflects our best estimate from partial data — treat it accordingly.
+      </p>
+    </div>
+
+    <!-- ── Limitations ────────────────────────────────────────────────────── -->
+    <div class="method-section">
+      <h2>Known Limitations</h2>
+      <ul>
+        <li><strong style="color:var(--text)">GSM is not captured.</strong> A 180 GSM cotton t-shirt is more durable than a 130 GSM cotton t-shirt with the same composition. We do not currently have GSM data and note this in medium-confidence scores.</li>
+        <li><strong style="color:var(--text)">Construction quality is not scored.</strong> Two garments with identical fiber composition but different seam types, stitch density, and lining will have different real-world durability. This is not yet captured.</li>
+        <li><strong style="color:var(--text)">Fiber scores represent class averages.</strong> A high-grade merino will outperform a low-grade merino despite both being scored as "merino."</li>
+        <li><strong style="color:var(--text)">Price benchmarks are calibrated to the US market.</strong> Benchmarks may not reflect pricing in other markets.</li>
+        <li><strong style="color:var(--text)">Fiber extraction is AI-assisted.</strong> When you scan a URL or paste product text, GPT-4o-mini extracts the fiber composition. Extraction errors are possible, especially with unusual formatting. Always verify against the source if precision matters.</li>
+      </ul>
+    </div>
+
+    <!-- ── Version history ────────────────────────────────────────────────── -->
+    <div class="method-section">
+      <h2>Version History</h2>
+      <ul>
+        <li><strong style="color:var(--text)">v1.0</strong> — Initial release. Material durability scoring, price pressure, cost-per-wash. 25 fibers, 20 blend interactions, 6 garment categories.</li>
+      </ul>
+    </div>
+
+  </main>
+
+  <footer>
+    <a href="/">← Back to scoring</a>
+    &nbsp;·&nbsp;
+    <span>Methodology v1.0</span>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,315 @@
+/* ── Tab switching ───────────────────────────────────────────────────────── */
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    const target = tab.dataset.tab;
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+    tab.classList.add("active");
+    document.getElementById(`${target}-form`).classList.add("active");
+    hideError();
+  });
+});
+
+/* ── Tab A: URL scan ─────────────────────────────────────────────────────── */
+document.getElementById("btn-score-url").addEventListener("click", async () => {
+  const url = document.getElementById("url-input").value.trim();
+  if (!url) { showError("Please enter a product URL.", null); return; }
+  if (!url.startsWith("http")) { showError("Please enter a full URL starting with https://", null); return; }
+
+  const price = parseFloat(document.getElementById("price-url").value) || null;
+  const category = document.getElementById("category-url").value || "other";
+
+  setLoading("Fetching product page…");
+  await submitScore({ url, price, category }, "url");
+});
+
+/* ── Tab B: Paste text ───────────────────────────────────────────────────── */
+document.getElementById("btn-score-text").addEventListener("click", async () => {
+  const raw_text = document.getElementById("raw-text").value.trim();
+  if (!raw_text) { showError("Please paste some product text first.", null); return; }
+
+  const price = parseFloat(document.getElementById("price-text").value) || null;
+  const category = document.getElementById("category-text").value || "other";
+
+  setLoading("Extracting fiber composition…");
+  await submitScore({ raw_text, price, category }, "text");
+});
+
+/* ── Tab C: Manual form ──────────────────────────────────────────────────── */
+document.getElementById("manual-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const raw = document.getElementById("composition-text").value.trim();
+  const price = parseFloat(document.getElementById("price-manual").value) || null;
+  const category = document.getElementById("category-manual").value;
+
+  const composition = parseCompositionText(raw);
+  if (!composition.length) {
+    showError("Couldn't parse the composition. Try: \"52% acrylic, 48% polyester\"", null);
+    return;
+  }
+
+  setLoading("Scoring fiber composition…");
+  await submitScore({ composition, price, category }, "json");
+});
+
+/* ── Score submission ────────────────────────────────────────────────────── */
+async function submitScore(data, mode) {
+  try {
+    let body;
+
+    if (mode === "url") {
+      body = JSON.stringify({ url: data.url, price: data.price, category: data.category });
+    } else if (mode === "text") {
+      body = JSON.stringify({ raw_text: data.raw_text, price: data.price, category: data.category });
+    } else {
+      body = JSON.stringify({ composition: data.composition, price: data.price, category: data.category });
+    }
+
+    const response = await fetch("/api/score", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      const msg = result.error || "Something went wrong. Please try again.";
+      const action = _errorAction(result.error_type, mode, msg);
+      showError(msg, action);
+      return;
+    }
+
+    renderResult(result);
+
+  } catch (err) {
+    showError("Network error — is the server running?", null);
+  }
+}
+
+function _errorAction(errorType, currentMode, serverMsg) {
+  // For URL-mode blocked/timeout errors the server often includes site-specific
+  // instructions in the error message itself — don't add a generic duplicate.
+  if ((errorType === "blocked" || errorType === "timeout") && currentMode === "url") {
+    // If the server message already tells them what to do, the action line is redundant.
+    const alreadyInstructed = serverMsg && (
+      serverMsg.toLowerCase().includes("paste text") ||
+      serverMsg.toLowerCase().includes("scroll") ||
+      serverMsg.toLowerCase().includes("copy")
+    );
+    return alreadyInstructed
+      ? null
+      : "Switch to the 'Paste text' tab, copy the product description from the site, and paste it there.";
+  }
+  if (errorType === "empty" && currentMode === "url") {
+    return "Switch to the 'Paste text' tab and paste the materials section of the product page.";
+  }
+  if (errorType === "empty") {
+    return "No fiber composition was found. Make sure you've copied the materials section of the product page.";
+  }
+  return null;
+}
+
+/* ── Render result ───────────────────────────────────────────────────────── */
+function renderResult(r) {
+  hideAll();
+  document.getElementById("result-card").hidden = false;
+
+  const score = Math.round(r.worth_it_score || 0);
+  const material = Math.round(r.material_score || 0);
+  const props = r.property_scores || {};
+  const pp = r.price_pressure || {};
+  const cpw = r.cost_per_wash || {};
+
+  document.getElementById("score-number").textContent = score;
+  const CIRCUMFERENCE = 326.73;
+  const offset = CIRCUMFERENCE - (score / 100) * CIRCUMFERENCE;
+  const arc = document.getElementById("score-arc");
+  arc.style.strokeDashoffset = offset;
+  arc.style.stroke = scoreColor(score);
+  document.getElementById("score-number").style.color = scoreColor(score);
+
+  document.getElementById("verdict-sentence").textContent = r.verdict_sentence || "";
+
+  const conf = r.confidence || "low";
+  const confLabel = document.getElementById("confidence-label");
+  confLabel.textContent = `${conf.toUpperCase()} CONFIDENCE`;
+  confLabel.style.color = conf === "high" ? "var(--green)" : conf === "medium" ? "var(--yellow)" : "var(--red)";
+  const notes = r.confidence_notes || [];
+  document.getElementById("confidence-note").textContent = notes[notes.length - 1] || "";
+
+  document.getElementById("stat-material").textContent = `${material} / 100`;
+  document.getElementById("stat-material").style.color = scoreColor(material);
+
+  const pressureColors = { low: "var(--green)", moderate: "var(--yellow)", high: "var(--red)", extreme: "var(--red)", unknown: "var(--muted)" };
+  document.getElementById("stat-pressure").textContent = pp.label || "—";
+  document.getElementById("stat-pressure").style.color = pressureColors[pp.level] || "var(--muted)";
+
+  if (cpw.cost_per_wash_low != null) {
+    document.getElementById("stat-cpw").textContent =
+      `$${cpw.cost_per_wash_low.toFixed(2)}–$${cpw.cost_per_wash_high.toFixed(2)}`;
+  }
+
+  const pd = document.getElementById("price-detail");
+  if (pp.detail) { pd.textContent = pp.detail; pd.hidden = false; }
+  else { pd.hidden = true; }
+
+  setBar("pilling",      props.pilling);
+  setBar("tensile",      props.tensile);
+  setBar("colorfastness",props.colorfastness);
+  setBar("moisture",     props.moisture);
+
+  renderConstruction(r.construction);
+}
+
+function renderConstruction(c) {
+  const row = document.getElementById("construction-row");
+  if (!c) { row.hidden = true; return; }
+
+  row.hidden = false;
+
+  const scoreVal = c.score || 0;
+  const scoreEl = document.getElementById("construction-score");
+  scoreEl.textContent = scoreVal.toFixed(1);
+  // Color: treat /10 same scale as /100 → multiply by 10 for scoreColor
+  scoreEl.style.color = scoreColor(scoreVal * 10);
+
+  // Bar: score is /10 so multiply by 10 to get %
+  const bar = document.getElementById("bar-construction");
+  bar.style.width = `${scoreVal * 10}%`;
+  bar.style.background = scoreColor(scoreVal * 10);
+
+  // Confidence label
+  const conf = c.confidence || "low";
+  const confEl = document.getElementById("construction-conf");
+  confEl.textContent = `${conf.toUpperCase()} CONFIDENCE`;
+  confEl.style.color = conf === "high" ? "var(--green)" : conf === "medium" ? "var(--yellow)" : "var(--red)";
+
+  // Price floor note
+  const noteEl = document.getElementById("construction-floor-note");
+  if (c.price_floor_note) {
+    noteEl.textContent = c.price_floor_note;
+    noteEl.hidden = false;
+  } else {
+    noteEl.hidden = true;
+  }
+
+  // Construction signals as chips
+  const sigList = document.getElementById("construction-signals");
+  sigList.innerHTML = "";
+  (c.signals_found || []).forEach(sig => {
+    const li = document.createElement("li");
+    li.textContent = sig;
+    sigList.appendChild(li);
+  });
+}
+
+function setBar(prop, value) {
+  const pct = Math.round(value || 0);
+  document.getElementById(`bar-${prop}`).style.width = `${pct}%`;
+  document.getElementById(`bar-${prop}`).style.background = scoreColor(pct);
+  const v = document.getElementById(`val-${prop}`);
+  if (v) v.textContent = pct;
+}
+
+function scoreColor(score) {
+  if (score >= 66) return "var(--green)";
+  if (score >= 41) return "var(--yellow)";
+  return "var(--red)";
+}
+
+/* ── Download card ───────────────────────────────────────────────────────── */
+document.getElementById("btn-download").addEventListener("click", () => {
+  const btn = document.getElementById("btn-download");
+  btn.disabled = true;
+  btn.textContent = "Preparing…";
+
+  const finish = () => { btn.disabled = false; btn.textContent = "Download card"; };
+
+  if (typeof html2canvas !== "undefined") {
+    captureCard(finish);
+    return;
+  }
+
+  const script = document.createElement("script");
+  script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+  script.onload = () => captureCard(finish);
+  script.onerror = () => {
+    finish();
+    alert("Couldn't load the image library. Check your internet connection and try again.");
+  };
+  document.head.appendChild(script);
+});
+
+function captureCard(finish) {
+  // Resolve CSS variables to actual hex values before capture
+  // html2canvas doesn't support CSS custom properties on older browsers
+  const card = document.getElementById("card-inner");
+  html2canvas(card, {
+    backgroundColor: "#1a1a1a",
+    scale: 2,
+    useCORS: true,
+    logging: false,
+  }).then(canvas => {
+    const link = document.createElement("a");
+    link.download = "worth-it-score.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+    if (finish) finish();
+  }).catch(() => {
+    if (finish) finish();
+    alert("Screenshot failed. Try right-clicking the card and saving as image instead.");
+  });
+}
+
+/* ── Reset ───────────────────────────────────────────────────────────────── */
+document.getElementById("btn-reset").addEventListener("click", () => {
+  hideAll();
+  document.getElementById("input-panel").hidden = false;
+  ["url-input","price-url","category-url","raw-text","price-text","category-text",
+   "composition-text","price-manual"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+  document.getElementById("category-manual").value = "other";
+  document.getElementById("score-arc").style.strokeDashoffset = 326.73;
+});
+
+/* ── UI helpers ──────────────────────────────────────────────────────────── */
+function setLoading(msg) {
+  hideAll();
+  document.getElementById("loading").hidden = false;
+  document.getElementById("loading-msg").textContent = msg || "Analysing…";
+}
+
+function showError(msg, action) {
+  hideAll();
+  document.getElementById("input-panel").hidden = false;
+  document.getElementById("error-box").hidden = false;
+  document.getElementById("error-msg").textContent = msg;
+  const actionEl = document.getElementById("error-action");
+  if (action) { actionEl.textContent = action; actionEl.hidden = false; }
+  else { actionEl.hidden = true; }
+}
+
+function hideError() {
+  document.getElementById("error-box").hidden = true;
+}
+
+function hideAll() {
+  ["input-panel","loading","error-box","result-card"].forEach(id => {
+    document.getElementById(id).hidden = true;
+  });
+}
+
+/* ── Composition text parser (manual tab) ────────────────────────────────── */
+function parseCompositionText(text) {
+  const results = [];
+  const pattern = /(\d+(?:\.\d+)?)\s*%?\s*([a-zA-Z][a-zA-Z\s\-]+?)(?=\s*[\d%,\/]|$)|([a-zA-Z][a-zA-Z\s\-]+?)\s+(\d+(?:\.\d+)?)\s*%/g;
+  let match;
+  while ((match = pattern.exec(text)) !== null) {
+    if (match[1] && match[2]) results.push({ fiber: match[2].trim().toLowerCase(), pct: parseFloat(match[1]) });
+    else if (match[3] && match[4]) results.push({ fiber: match[3].trim().toLowerCase(), pct: parseFloat(match[4]) });
+  }
+  return results;
+}

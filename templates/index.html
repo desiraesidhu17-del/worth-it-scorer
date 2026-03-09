@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Worth It?</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <header>
+    <span class="logo">worth it?</span>
+    <span class="tagline">fiber science, not opinion</span>
+  </header>
+
+  <main>
+    <!-- Input panel -->
+    <section id="input-panel">
+      <div class="tabs">
+        <button class="tab active" data-tab="url">Paste URL</button>
+        <button class="tab" data-tab="text">Paste text</button>
+        <button class="tab" data-tab="manual">Enter manually</button>
+      </div>
+
+      <!-- ── Tab A: URL scan ──────────────────────────────────────────────── -->
+      <div id="url-form" class="tab-content active">
+        <p class="tab-hint">Paste a product link. We'll scan the page and extract everything.</p>
+        <div class="field">
+          <label for="url-input">Product URL</label>
+          <input
+            id="url-input"
+            type="url"
+            placeholder="https://www.uniqlo.com/us/en/products/..."
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </div>
+        <div class="field-row two-col" style="margin-top:12px">
+          <div class="field">
+            <label for="price-url">Price override <span class="optional">(optional)</span></label>
+            <input id="price-url" type="number" min="0" step="0.01" placeholder="auto-detected" />
+          </div>
+          <div class="field">
+            <label for="category-url">Category override <span class="optional">(optional)</span></label>
+            <select id="category-url">
+              <option value="">Auto-detect</option>
+              <option value="sweater">Sweater / knitwear</option>
+              <option value="t-shirt">T-shirt / top</option>
+              <option value="dress">Dress / skirt</option>
+              <option value="jeans">Jeans / trousers</option>
+              <option value="outerwear">Jacket / coat</option>
+              <option value="activewear">Activewear</option>
+            </select>
+          </div>
+        </div>
+        <button id="btn-score-url" type="button" class="btn-score">Scan product</button>
+      </div>
+
+      <!-- ── Tab B: Paste text ────────────────────────────────────────────── -->
+      <div id="text-form" class="tab-content">
+        <p class="tab-hint">
+          Copy any text from the product page — the description, materials section, or care label — and paste it here. No formatting needed.
+        </p>
+        <div class="field">
+          <label for="raw-text">Product description</label>
+          <textarea
+            id="raw-text"
+            rows="6"
+            placeholder="e.g. Material: 52% Acrylic, 48% Polyester&#10;Care: Machine wash cold&#10;$148.00&#10;&#10;Paste anything from the product page."
+          ></textarea>
+        </div>
+        <div class="field-row two-col" style="margin-top:12px">
+          <div class="field">
+            <label for="price-text">Price override <span class="optional">(optional)</span></label>
+            <input id="price-text" type="number" min="0" step="0.01" placeholder="auto-detected" />
+          </div>
+          <div class="field">
+            <label for="category-text">Category override <span class="optional">(optional)</span></label>
+            <select id="category-text">
+              <option value="">Auto-detect</option>
+              <option value="sweater">Sweater / knitwear</option>
+              <option value="t-shirt">T-shirt / top</option>
+              <option value="dress">Dress / skirt</option>
+              <option value="jeans">Jeans / trousers</option>
+              <option value="outerwear">Jacket / coat</option>
+              <option value="activewear">Activewear</option>
+            </select>
+          </div>
+        </div>
+        <button id="btn-score-text" type="button" class="btn-score">Extract &amp; score</button>
+      </div>
+
+      <!-- ── Tab C: Manual entry ──────────────────────────────────────────── -->
+      <form id="manual-form" class="tab-content">
+        <p class="tab-hint">Enter the fiber composition directly. Use the format: 52% acrylic, 48% polyester</p>
+        <div class="field">
+          <label for="composition-text">Fiber composition</label>
+          <input
+            id="composition-text"
+            type="text"
+            placeholder="e.g. 52% acrylic, 48% polyester"
+            autocomplete="off"
+          />
+        </div>
+        <div class="field-row two-col" style="margin-top:12px">
+          <div class="field">
+            <label for="price-manual">Price (USD)</label>
+            <input id="price-manual" type="number" min="0" step="0.01" placeholder="148" />
+          </div>
+          <div class="field">
+            <label for="category-manual">Category</label>
+            <select id="category-manual">
+              <option value="other">Select…</option>
+              <option value="sweater">Sweater / knitwear</option>
+              <option value="t-shirt">T-shirt / top</option>
+              <option value="dress">Dress / skirt</option>
+              <option value="jeans">Jeans / trousers</option>
+              <option value="outerwear">Jacket / coat</option>
+              <option value="activewear">Activewear</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="btn-score">Score it</button>
+      </form>
+
+    </section>
+
+    <!-- Loading -->
+    <div id="loading" hidden>
+      <div class="spinner"></div>
+      <p id="loading-msg">Analysing fiber composition…</p>
+    </div>
+
+    <!-- Error -->
+    <div id="error-box" hidden>
+      <p id="error-msg"></p>
+      <p id="error-action" class="error-action"></p>
+    </div>
+
+    <!-- Result card -->
+    <section id="result-card" hidden>
+      <div id="card-inner">
+
+        <div class="card-top">
+          <div class="score-circle">
+            <svg viewBox="0 0 120 120">
+              <circle class="track" cx="60" cy="60" r="52" />
+              <circle id="score-arc" class="arc" cx="60" cy="60" r="52"
+                stroke-dasharray="326.73" stroke-dashoffset="326.73" />
+            </svg>
+            <div class="score-number-wrap">
+              <span id="score-number">—</span>
+              <span class="score-label">/ 100</span>
+            </div>
+          </div>
+
+          <div class="card-top-right">
+            <p id="verdict-sentence" class="verdict-sentence"></p>
+            <div class="confidence-badge">
+              <span id="confidence-label"></span>
+              <span id="confidence-note" class="confidence-note"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat">
+            <span class="stat-label">Material durability</span>
+            <span id="stat-material" class="stat-value">—</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Price pressure</span>
+            <span id="stat-pressure" class="stat-value">—</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Cost per wash</span>
+            <span id="stat-cpw" class="stat-value">—</span>
+          </div>
+        </div>
+
+        <div id="price-detail" class="price-detail"></div>
+
+        <div class="property-bars">
+          <div class="prop-row"><span>Pilling resistance</span><div class="bar-track"><div class="bar" id="bar-pilling"></div></div><span id="val-pilling" class="prop-val"></span></div>
+          <div class="prop-row"><span>Tensile strength</span><div class="bar-track"><div class="bar" id="bar-tensile"></div></div><span id="val-tensile" class="prop-val"></span></div>
+          <div class="prop-row"><span>Colorfastness</span><div class="bar-track"><div class="bar" id="bar-colorfastness"></div></div><span id="val-colorfastness" class="prop-val"></span></div>
+          <div class="prop-row"><span>Moisture management</span><div class="bar-track"><div class="bar" id="bar-moisture"></div></div><span id="val-moisture" class="prop-val"></span></div>
+        </div>
+
+        <!-- Construction score -->
+        <div id="construction-row" class="construction-row" hidden>
+          <div class="construction-header">
+            <span class="construction-label">Construction</span>
+            <span id="construction-score-wrap" class="construction-score-wrap">
+              <span id="construction-score">—</span>
+              <span class="construction-denom">/ 10</span>
+            </span>
+            <span id="construction-conf" class="construction-conf"></span>
+          </div>
+          <div class="bar-track" style="margin: 6px 0 8px;">
+            <div class="bar" id="bar-construction"></div>
+          </div>
+          <p id="construction-floor-note" class="construction-floor-note"></p>
+          <ul id="construction-signals" class="construction-signals"></ul>
+        </div>
+
+        <div class="card-footer">
+          <button id="btn-download" class="btn-download">Download card</button>
+          <button id="btn-reset" class="btn-reset">Score another</button>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <a href="/methodology">How scores are calculated</a>
+    &nbsp;·&nbsp;
+    <span>Scores reflect fiber science, not opinions. Methodology v1.0.</span>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
