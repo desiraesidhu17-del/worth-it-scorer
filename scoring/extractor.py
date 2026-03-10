@@ -32,7 +32,7 @@ log = logging.getLogger(__name__)
 # ── Material context keywords — regex must find these near a % match ──────────
 _MATERIAL_CONTEXT_RE = re.compile(
     r"\b(material|fabric|shell|lining|body|composition|trim|care|content|"
-    r"fibre|fiber|outer|inside|fill|filling|made of|made from)\b",
+    r"fibre|fiber|outer|inside|fill|filling|made of|made from|made with)\b",
     re.IGNORECASE,
 )
 
