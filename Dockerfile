@@ -19,6 +19,9 @@ RUN playwright install chromium --with-deps
 # Copy app
 COPY . .
 
+# Make startup script executable
+RUN chmod +x start.sh
+
 # Non-root user for security
 RUN useradd -m appuser && chown -R appuser /app
 USER appuser
@@ -26,4 +29,4 @@ USER appuser
 EXPOSE 8080
 ENV PORT=8080
 
-CMD ["sh", "-c", "gunicorn app:app --bind 0.0.0.0:${PORT:-8080} --workers 1 --timeout 120"]
+CMD ["./start.sh"]
