@@ -225,6 +225,7 @@ def _extract_from_url(url: str) -> dict:
         }
 
     page_text = None
+    raw_html = None  # Raw HTML for candidate block isolation and JSON-LD extraction
     needs_js = False
 
     # ── Step 1: Fast HTTP fetch ───────────────────────────────────────────────
@@ -239,7 +240,8 @@ def _extract_from_url(url: str) -> dict:
                 "error_type": "network",
             }
         else:
-            soup = BeautifulSoup(response.text, "lxml")
+            raw_html = response.text  # Capture raw HTML before stripping tags
+            soup = BeautifulSoup(raw_html, "lxml")
             for tag in soup(["script", "style", "nav", "header", "footer", "iframe", "noscript"]):
                 tag.decompose()
             candidate = soup.get_text(separator=" ", strip=True)
@@ -270,13 +272,32 @@ def _extract_from_url(url: str) -> dict:
             "error_type": "blocked",
         }
 
-    # Truncate to ~8000 chars — composition is always near product details
-    if len(page_text) > 8000:
-        page_text = page_text[:8000]
+    # ── Production pipeline ────────────────────────────────────────────────────
+    from scoring.extractor import (
+        isolate_candidate_blocks, extract_from_payload, _call_gpt_resolver
+    )
 
-    result = _call_gpt_text_extraction(page_text)
-    # Stash page_text so the route handler can run construction signal extraction
-    result["_page_text"] = page_text
+    # Step 0: candidate block isolation from fetched HTML
+    html_source = raw_html or page_text or ""
+    candidate_blocks = isolate_candidate_blocks(html_source) if html_source else []
+
+    # Build payload for extract_from_payload
+    payload = {
+        "url": url,
+        "json_ld": _extract_json_ld_from_html(html_source),
+        "meta": _extract_meta_from_html(html_source),
+        "candidate_blocks": candidate_blocks or ([page_text[:3000]] if page_text else []),
+    }
+
+    extraction = extract_from_payload(payload)
+
+    # GPT fallback if needed
+    if not extraction.composition_blocks:
+        fallback_text = " ".join(candidate_blocks[:3]) if candidate_blocks else page_text[:2000]
+        extraction = _call_gpt_resolver(fallback_text, openai_client)
+
+    result = extraction.to_dict()
+    result["_page_text"] = " ".join(candidate_blocks) if candidate_blocks else page_text[:3000]
     _extraction_cache[cache_key] = result
     return result
 
@@ -294,6 +315,41 @@ def _blocked_domain_hint(url: str) -> str | None:
     except Exception:
         pass
     return None
+
+
+def _extract_json_ld_from_html(html_or_text: str) -> list:
+    """Extract JSON-LD blocks from raw HTML."""
+    if not html_or_text:
+        return []
+    try:
+        soup = BeautifulSoup(html_or_text, "lxml")
+        blocks = []
+        for script in soup.find_all("script", type="application/ld+json"):
+            raw = script.string or ""
+            try:
+                blocks.append(json.loads(raw))
+            except (json.JSONDecodeError, ValueError):
+                blocks.append(raw)  # send raw for fallback
+        return blocks
+    except Exception:
+        return []
+
+
+def _extract_meta_from_html(html_or_text: str) -> dict:
+    """Extract key meta tags from raw HTML."""
+    meta = {}
+    if not html_or_text:
+        return meta
+    try:
+        soup = BeautifulSoup(html_or_text, "lxml")
+        for tag in soup.find_all("meta"):
+            name = tag.get("property") or tag.get("name") or ""
+            content = tag.get("content") or ""
+            if name and content:
+                meta[name] = content
+    except Exception:
+        pass
+    return meta
 
 
 def _fetch_with_playwright(url: str) -> str | None:
