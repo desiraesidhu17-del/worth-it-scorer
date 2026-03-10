@@ -1,4 +1,5 @@
-import os, base64, hashlib, json
+import os, base64, hashlib, json, time
+import uuid as _uuid_module
 import requests as http_requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
@@ -27,6 +28,10 @@ openai_client = OpenAI(api_key=API_KEY)
 
 # In-memory extraction cache: hash → parsed extraction dict
 _extraction_cache: dict[str, dict] = {}
+
+# Result store for extension flow: uuid → { result, expires_at }
+_result_store: dict[str, dict] = {}
+_RESULT_TTL_SECONDS = 300  # 5 minutes
 
 # Known retailers that block automated access (Akamai/Cloudflare Enterprise CDN)
 # For these we skip the slow Playwright attempt and go straight to a clear error with
@@ -476,6 +481,120 @@ def _parse_price(value) -> float | None:
         return float(cleaned) if cleaned else None
     except (ValueError, TypeError):
         return None
+
+
+# ── Extension API endpoints ────────────────────────────────────────────────────
+
+@app.route("/api/score-page", methods=["POST", "OPTIONS"])
+def score_page_endpoint():
+    """
+    Extension endpoint. Receives pre-extracted page data from content.js.
+    Runs the production extraction pipeline, stores result, returns { result_id }.
+    """
+    if request.method == "OPTIONS":
+        return _cors_preflight()
+
+    try:
+        data = request.get_json(force=True, silent=True) or {}
+        price = _parse_price(data.get("price"))
+        category = data.get("category", "other")
+
+        # Run production extraction pipeline
+        from scoring.extractor import extract_from_payload, _call_gpt_resolver
+        result_extraction = extract_from_payload(data)
+
+        # GPT fallback if still no composition
+        if not result_extraction.composition_blocks:
+            candidate_text = " ".join(data.get("candidate_blocks") or [])
+            if candidate_text:
+                result_extraction = _call_gpt_resolver(candidate_text, openai_client)
+
+        if not result_extraction.composition_blocks:
+            return jsonify({
+                "error": "No fiber composition found on this page.",
+                "error_type": "empty"
+            }), 422
+
+        composition = result_extraction.main_composition or (
+            result_extraction.composition_blocks[0].fibers
+            if result_extraction.composition_blocks else []
+        )
+        if price is None:
+            price = result_extraction.price
+        if category == "other" and result_extraction.category:
+            category = result_extraction.category
+
+        brand = result_extraction.brand
+        candidate_text = " ".join(data.get("candidate_blocks") or [])
+        construction = score_from_text(
+            candidate_text, price, category, brand=brand
+        ) if candidate_text else None
+
+        score_result = score_item(
+            composition=composition,
+            price=price,
+            category=category,
+            construction=construction,
+        )
+        result_dict = score_result.to_dict()
+        result_dict.update(result_extraction.to_dict())
+
+        # Store with TTL
+        result_id = str(_uuid_module.uuid4())
+        _result_store[result_id] = {
+            "result": result_dict,
+            "expires_at": time.time() + _RESULT_TTL_SECONDS,
+        }
+        _cleanup_result_store()
+
+        return jsonify({"result_id": result_id})
+
+    except OpenAIError as e:
+        return jsonify({"error": str(e)}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/result/<result_id>", methods=["GET", "OPTIONS"])
+def get_result_endpoint(result_id: str):
+    """Fetch a previously scored result by UUID (used by web app after extension opens it)."""
+    if request.method == "OPTIONS":
+        return _cors_preflight()
+
+    entry = _result_store.get(result_id)
+    if not entry:
+        return jsonify({"error": "Result not found or expired", "error_type": "expired"}), 404
+    if time.time() > entry["expires_at"]:
+        del _result_store[result_id]
+        return jsonify({"error": "Result expired", "error_type": "expired"}), 404
+
+    return jsonify(entry["result"])
+
+
+def _cleanup_result_store():
+    """Evict expired entries. Call periodically to prevent memory growth."""
+    now = time.time()
+    expired = [k for k, v in _result_store.items() if now > v["expires_at"]]
+    for k in expired:
+        del _result_store[k]
+
+
+def _cors_preflight():
+    """Return CORS preflight response for extension requests."""
+    resp = jsonify({})
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    return resp, 204
+
+
+@app.after_request
+def add_cors_headers(response):
+    """Add CORS headers to extension API endpoints."""
+    if request.path.startswith("/api/score-page") or request.path.startswith("/api/result/"):
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    return response
 
 
 if __name__ == "__main__":
