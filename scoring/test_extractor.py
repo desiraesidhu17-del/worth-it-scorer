@@ -39,3 +39,161 @@ def test_non_fiber_materials():
     assert get_material_type("suede") == "non-fiber"
     assert get_material_type("down") == "fill"
     assert get_material_type("cotton") is None  # normal fiber
+
+
+# ── Task 2: Contextual regex tests ────────────────────────────────────────────
+
+def test_regex_finds_simple_composition():
+    from scoring.extractor import extract_by_regex
+    text = "75% cotton, 25% polyester"
+    result = extract_by_regex(text)
+    assert len(result) == 2
+    assert {"fiber": "cotton", "pct": 75.0} in result
+    assert {"fiber": "polyester", "pct": 25.0} in result
+
+def test_regex_ignores_sale_percentages():
+    from scoring.extractor import extract_by_regex
+    text = "10% off today only. Machine wash. 75% cotton, 25% polyester."
+    result = extract_by_regex(text)
+    fibers = [r["fiber"] for r in result]
+    assert "cotton" in fibers
+    assert "polyester" in fibers
+    # "off" is not a fiber - should not appear
+    assert len(result) == 2
+
+def test_regex_ignores_customer_ratings():
+    from scoring.extractor import extract_by_regex
+    text = "Rated 95% by customers. Material: 100% cotton."
+    result = extract_by_regex(text)
+    assert len(result) == 1
+    assert result[0]["fiber"] == "cotton"
+
+def test_regex_ignores_water_usage():
+    from scoring.extractor import extract_by_regex
+    text = "Made with 30% less water. Fabric: 80% cotton, 20% nylon."
+    result = extract_by_regex(text)
+    assert len(result) == 2
+    fibers = [r["fiber"] for r in result]
+    assert "cotton" in fibers
+    assert "nylon" in fibers
+
+def test_regex_normalizes_aliases():
+    from scoring.extractor import extract_by_regex
+    text = "Composition: 95% viscose, 5% spandex"
+    result = extract_by_regex(text)
+    fibers = [r["fiber"] for r in result]
+    assert "elastane" in fibers  # spandex normalized
+    assert "viscose" in fibers
+
+def test_regex_handles_recycled_modifier():
+    from scoring.extractor import extract_by_regex
+    text = "Shell: 75% recycled polyester, 25% nylon"
+    result = extract_by_regex(text)
+    fibers = [r["fiber"] for r in result]
+    assert "recycled polyester" in fibers
+    assert "nylon" in fibers
+
+def test_regex_returns_empty_for_no_composition():
+    from scoring.extractor import extract_by_regex
+    text = "Beautiful dress. Free shipping on orders over $50."
+    result = extract_by_regex(text)
+    assert result == []
+
+
+# ── Task 3: JSON-LD + candidate block tests ───────────────────────────────────
+
+def test_json_ld_extracts_composition():
+    from scoring.extractor import _extract_json_ld
+    blocks = [{
+        "@type": "Product",
+        "name": "Cotton T-Shirt",
+        "offers": {"price": "29.99"},
+        "description": "Made from 100% organic cotton. Machine wash cold.",
+    }]
+    result = _extract_json_ld(blocks)
+    assert result.price == 29.99
+    assert len(result.composition_blocks) == 1
+    assert result.composition_blocks[0].fibers[0]["fiber"] == "cotton"
+    assert result.extraction_method == "json_ld"
+
+def test_json_ld_skips_non_product():
+    from scoring.extractor import _extract_json_ld
+    blocks = [{"@type": "Organization", "name": "Zara"}]
+    result = _extract_json_ld(blocks)
+    assert result.composition_blocks == []
+
+def test_candidate_block_isolation_finds_materials():
+    from scoring.extractor import isolate_candidate_blocks
+    html = """
+    <div>
+      <h3>Materials</h3>
+      <p>Shell: 75% cotton, 25% polyester. Lining: 100% viscose.</p>
+    </div>
+    <div><h3>Shipping</h3><p>Free shipping on orders over $50.</p></div>
+    """
+    blocks = isolate_candidate_blocks(html)
+    assert len(blocks) >= 1
+    assert any("cotton" in b.lower() for b in blocks)
+
+def test_extract_from_text_basic():
+    from scoring.extractor import extract_from_text
+    result = extract_from_text("Composition: 80% cotton, 20% polyester. Care: machine wash.")
+    assert result.main_composition is not None
+    assert len(result.main_composition) == 2
+
+def test_validation_confidence_full_sum():
+    from scoring.extractor import _apply_validation, CompositionBlock, ExtractionResult
+    block = CompositionBlock(part="unknown", fibers=[
+        {"fiber": "cotton", "pct": 75},
+        {"fiber": "polyester", "pct": 25},
+    ], source="regex")
+    result = ExtractionResult(composition_blocks=[block])
+    result = _apply_validation(result)
+    assert result.extraction_confidence == "high"
+    assert result.warnings == []
+
+def test_validation_confidence_partial_sum():
+    from scoring.extractor import _apply_validation, CompositionBlock, ExtractionResult
+    block = CompositionBlock(part="unknown", fibers=[
+        {"fiber": "cotton", "pct": 70},
+    ], source="regex")
+    result = ExtractionResult(composition_blocks=[block])
+    result = _apply_validation(result)
+    assert result.extraction_confidence in ("medium", "low")
+    assert len(result.warnings) >= 1
+
+
+# ── Task 4: GPT fallback tests ────────────────────────────────────────────────
+
+import json as _json
+from unittest.mock import MagicMock, patch
+
+def test_gpt_fallback_parses_response():
+    from scoring.extractor import _call_gpt_resolver
+    mock_client = MagicMock()
+    mock_client.chat.completions.create.return_value = MagicMock(
+        choices=[MagicMock(message=MagicMock(content=_json.dumps({
+            "product_name": "Silk Blouse",
+            "price": 120.0,
+            "brand": "COS",
+            "composition_blocks": [
+                {"part": "shell", "fibers": [{"fiber": "silk", "pct": 100}]}
+            ],
+            "main_composition": [{"fiber": "silk", "pct": 100}],
+            "confidence": "high",
+            "reasoning": "Single fiber 100% sum."
+        })))]
+    )
+    result = _call_gpt_resolver("Silk blouse, COS, $120. 100% silk.", mock_client)
+    assert result.main_composition is not None
+    assert result.main_composition[0]["fiber"] == "silk"
+    assert result.extraction_method == "gpt"
+
+def test_gpt_fallback_handles_invalid_json():
+    from scoring.extractor import _call_gpt_resolver
+    mock_client = MagicMock()
+    mock_client.chat.completions.create.return_value = MagicMock(
+        choices=[MagicMock(message=MagicMock(content="not valid json {{"))]
+    )
+    result = _call_gpt_resolver("some text", mock_client)
+    assert result.composition_blocks == []
