@@ -26,9 +26,10 @@ btn.addEventListener("click", async () => {
 
     // Step 2: Inject extraction logic and get payload
     // Using func: injection so the return value is captured (MV3 requirement)
+    // async func so we can await accordion expansion before reading the DOM
     const [{ result: payload }] = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      func: () => {
+      func: async () => {
         const r = {
           url: window.location.href,
           json_ld: [],
@@ -36,6 +37,33 @@ btn.addEventListener("click", async () => {
           meta: {},
           candidate_blocks: [],
         };
+
+        const LABELS = new Set([
+          "materials", "material", "fabric", "composition", "care", "details",
+          "shell", "lining", "body", "trim", "content", "construction",
+          "product details", "fabric & care", "material & care", "materials & care",
+          "fiber content", "fibre content", "fabric content",
+        ]);
+
+        // Step 0: Auto-expand collapsed accordions that match material/detail labels
+        // so that hidden composition text is in the DOM before we read it.
+        document.querySelectorAll(
+          "button,summary,[role='button'],[role='tab']"
+        ).forEach(el => {
+          const txt = (el.textContent || "").trim().toLowerCase();
+          if (txt.length <= 60 && LABELS.has(txt)) {
+            try { el.click(); } catch (_) {}
+          }
+        });
+        // Also expand aria-collapsed elements that mention material/fabric/detail
+        document.querySelectorAll("[aria-expanded='false']").forEach(el => {
+          const txt = (el.textContent || "").trim().toLowerCase();
+          if (/\b(material|fabric|detail|composition|care|fiber|fibre)\b/.test(txt)) {
+            try { el.click(); } catch (_) {}
+          }
+        });
+        // Wait for accordion animations to finish
+        await new Promise(resolve => setTimeout(resolve, 600));
 
         // JSON-LD blocks
         document.querySelectorAll('script[type="application/ld+json"]').forEach(s => {
@@ -57,16 +85,10 @@ btn.addEventListener("click", async () => {
         });
 
         // Candidate block isolation
-        const LABELS = new Set([
-          "materials", "material", "fabric", "composition", "care", "details",
-          "shell", "lining", "body", "trim", "content", "construction",
-          "product details", "fabric & care", "material & care",
-          "fiber content", "fibre content", "fabric content",
-        ]);
         const seen = new Set();
 
         document.querySelectorAll(
-          "h1,h2,h3,h4,h5,h6,button,label,summary,dt,th,span,div,p"
+          "h1,h2,h3,h4,h5,h6,button,label,summary,dt,th,span,div,p,li"
         ).forEach(node => {
           const lbl = (node.textContent || "").trim().toLowerCase();
           if (lbl.length > 60 || !LABELS.has(lbl)) return;
@@ -107,6 +129,12 @@ btn.addEventListener("click", async () => {
             }
           }
         });
+
+        // Last resort: full body text so the backend can GPT-extract composition
+        if (!r.candidate_blocks.length) {
+          const bodyText = (document.body.innerText || "").trim().slice(0, 3000);
+          if (bodyText.length > 100) r.candidate_blocks.push(bodyText);
+        }
 
         return r;
       },
