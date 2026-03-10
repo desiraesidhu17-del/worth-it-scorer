@@ -1,3 +1,38 @@
+/* ── Extension result: render score if ?result=UUID is in URL ───────────── */
+(function checkExtensionResult() {
+  const params = new URLSearchParams(window.location.search);
+  const resultId = params.get('result');
+  if (!resultId) return;
+
+  // Show loading state
+  const inputSection = document.querySelector('.tabs') || document.querySelector('form');
+  if (inputSection) inputSection.hidden = true;
+
+  const status = document.createElement('p');
+  status.id = 'extension-status';
+  status.textContent = 'Loading score\u2026';
+  status.style.cssText = 'padding:20px;color:#aaa;font-size:14px;';
+  document.body.prepend(status);
+
+  fetch(`/api/result/${resultId}`)
+    .then(r => {
+      if (r.status === 404) throw new Error('expired');
+      if (!r.ok) throw new Error('fetch_failed');
+      return r.json();
+    })
+    .then(data => {
+      status.remove();
+      if (inputSection) inputSection.hidden = false;
+      renderResult(data);
+    })
+    .catch(err => {
+      status.textContent = err.message === 'expired'
+        ? 'Score expired \u2014 please re-scan the page with the extension.'
+        : 'Could not load score. Please try again.';
+      if (inputSection) inputSection.hidden = false;
+    });
+})();
+
 /* ── Tab switching ───────────────────────────────────────────────────────── */
 document.querySelectorAll(".tab").forEach(tab => {
   tab.addEventListener("click", () => {
