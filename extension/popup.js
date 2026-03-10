@@ -38,27 +38,25 @@ btn.addEventListener("click", async () => {
           candidate_blocks: [],
         };
 
-        const LABELS = new Set([
-          "materials", "material", "fabric", "composition", "care", "details",
-          "shell", "lining", "body", "trim", "content", "construction",
-          "product details", "fabric & care", "material & care", "materials & care",
-          "fiber content", "fibre content", "fabric content",
-        ]);
+        // Regex that matches any label mentioning fiber/material/composition keywords.
+        // Covers: "Content", "Fabric & Care", "Composition, Care & Origin" (Zara),
+        // "Product Details" (Madewell), "Materials & Care" (Aritzia), etc.
+        const LABEL_RE = /\b(material|fabric|composition|fibre?|shell|lining|body|trim|care|details?|construction|content)\b/i;
 
-        // Step 0: Auto-expand collapsed accordions that match material/detail labels
+        // Step 0: Auto-expand collapsed accordions whose label matches LABEL_RE
         // so that hidden composition text is in the DOM before we read it.
         document.querySelectorAll(
           "button,summary,[role='button'],[role='tab']"
         ).forEach(el => {
-          const txt = (el.textContent || "").trim().toLowerCase();
-          if (txt.length <= 60 && LABELS.has(txt)) {
+          const txt = (el.textContent || "").trim();
+          if (txt.length <= 80 && LABEL_RE.test(txt)) {
             try { el.click(); } catch (_) {}
           }
         });
-        // Also expand aria-collapsed elements that mention material/fabric/detail
+        // Also expand aria-expanded=false elements matching the same keywords
         document.querySelectorAll("[aria-expanded='false']").forEach(el => {
-          const txt = (el.textContent || "").trim().toLowerCase();
-          if (/\b(material|fabric|detail|composition|care|fiber|fibre)\b/.test(txt)) {
+          const txt = (el.textContent || "").trim();
+          if (txt.length <= 80 && LABEL_RE.test(txt)) {
             try { el.click(); } catch (_) {}
           }
         });
@@ -90,8 +88,9 @@ btn.addEventListener("click", async () => {
         document.querySelectorAll(
           "h1,h2,h3,h4,h5,h6,button,label,summary,dt,th,span,div,p,li"
         ).forEach(node => {
-          const lbl = (node.textContent || "").trim().toLowerCase();
-          if (lbl.length > 60 || !LABELS.has(lbl)) return;
+          const lbl = (node.textContent || "").trim();
+          // Skip nodes that are clearly not section labels (too long or no keyword)
+          if (lbl.length > 80 || !LABEL_RE.test(lbl)) return;
 
           const parts = [];
           let sib = node.nextElementSibling, cc = 0;

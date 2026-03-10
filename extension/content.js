@@ -39,12 +39,10 @@
   });
 
   // ── Candidate block isolation (Step 0, runs in live DOM) ──────────────────
-  const DETAIL_LABELS = new Set([
-    'materials', 'material', 'fabric', 'composition', 'care', 'details',
-    'shell', 'lining', 'body', 'trim', 'content', 'construction',
-    'product details', 'fabric & care', 'material & care', 'materials & care',
-    'fiber content', 'fibre content', 'fabric content',
-  ]);
+  // Regex approach — covers any retailer label that mentions fiber/material keywords.
+  // Handles: "Content" (Free People), "Product Details" (Madewell),
+  //          "Composition, Care & Origin" (Zara), "Materials & Care" (Aritzia), etc.
+  const LABEL_RE = /\b(material|fabric|composition|fibre?|shell|lining|body|trim|care|details?|construction|content)\b/i;
 
   const seenHashes = new Set();
 
@@ -70,9 +68,9 @@
   );
 
   allNodes.forEach(node => {
-    const labelText = (node.textContent || '').trim().toLowerCase();
-    if (labelText.length > 60) return;  // too long to be a label
-    if (!DETAIL_LABELS.has(labelText)) return;
+    const labelText = (node.textContent || '').trim();
+    if (labelText.length > 80) return;  // too long to be a label
+    if (!LABEL_RE.test(labelText)) return;
 
     // Collect this node + nearby siblings + parent container
     const parts = [];
@@ -98,7 +96,7 @@
   // Fallback: grab <details>/<summary> contents (accordions)
   document.querySelectorAll('details').forEach(details => {
     const summaryText = (details.querySelector('summary') || {}).textContent || '';
-    if (DETAIL_LABELS.has(summaryText.trim().toLowerCase())) {
+    if (summaryText.trim().length <= 80 && LABEL_RE.test(summaryText)) {
       addCandidate(details.textContent.trim().slice(0, 600));
     }
   });
