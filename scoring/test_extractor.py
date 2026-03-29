@@ -197,3 +197,38 @@ def test_gpt_fallback_handles_invalid_json():
     )
     result = _call_gpt_resolver("some text", mock_client)
     assert result.composition_blocks == []
+
+
+# ── Task 1: _parse_price currency handling ────────────────────────────────────
+
+def test_parse_price_usd():
+    from app import _parse_price
+    assert _parse_price("$217.00") == 217.0
+
+def test_parse_price_cad():
+    from app import _parse_price
+    assert _parse_price("CA$217.00") == 217.0
+
+def test_parse_price_gbp():
+    from app import _parse_price
+    assert _parse_price("£89.99") == 89.99
+
+def test_parse_price_eur():
+    from app import _parse_price
+    assert _parse_price("€120") == 120.0
+
+def test_parse_price_aud():
+    from app import _parse_price
+    assert _parse_price("AU$145.00") == 145.0
+
+def test_parse_price_thousands():
+    from app import _parse_price
+    assert _parse_price("$1,234.00") == 1234.0
+
+def test_parse_price_none():
+    from app import _parse_price
+    assert _parse_price(None) is None
+
+def test_parse_price_numeric():
+    from app import _parse_price
+    assert _parse_price(217) == 217.0

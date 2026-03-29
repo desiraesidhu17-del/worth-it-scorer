@@ -533,7 +533,10 @@ def _parse_price(value) -> float | None:
     if value is None:
         return None
     try:
-        cleaned = str(value).replace("$", "").replace(",", "").strip()
+        # Strip all non-numeric characters except decimal point.
+        # Handles: $217, CA$217, £89.99, €120, AU$145, 1,234.56
+        import re
+        cleaned = re.sub(r"[^\d.]", "", str(value).replace(",", ""))
         return float(cleaned) if cleaned else None
     except (ValueError, TypeError):
         return None
