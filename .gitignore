@@ -9,3 +9,4 @@ uploads/
 *.jpg
 *.png
 *.save
+.worktrees/
