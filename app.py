@@ -1,4 +1,4 @@
-import os, base64, hashlib, json, time
+import os, re, base64, hashlib, json, time
 import uuid as _uuid_module
 import requests as http_requests
 from bs4 import BeautifulSoup
@@ -535,7 +535,6 @@ def _parse_price(value) -> float | None:
     try:
         # Strip all non-numeric characters except decimal point.
         # Handles: $217, CA$217, £89.99, €120, AU$145, 1,234.56
-        import re
         cleaned = re.sub(r"[^\d.]", "", str(value).replace(",", ""))
         return float(cleaned) if cleaned else None
     except (ValueError, TypeError):

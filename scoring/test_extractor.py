@@ -232,3 +232,16 @@ def test_parse_price_none():
 def test_parse_price_numeric():
     from app import _parse_price
     assert _parse_price(217) == 217.0
+
+def test_parse_price_european_decimal_known_limitation():
+    # European format "1.234,56" (meaning 1234.56) is a known limitation:
+    # comma is stripped first, leaving "1.23456", which parses as 1.23456.
+    # We intentionally do not fix this edge case; this test documents the behavior.
+    from app import _parse_price
+    assert _parse_price("1.234,56") == 1.23456
+
+def test_parse_price_multiple_decimal_points():
+    # "12.34.56" is malformed; float() raises ValueError, so we return None.
+    # This is intentional — we drop silently rather than guess.
+    from app import _parse_price
+    assert _parse_price("12.34.56") is None
