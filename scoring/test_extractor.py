@@ -245,3 +245,55 @@ def test_parse_price_multiple_decimal_points():
     # This is intentional — we drop silently rather than guess.
     from app import _parse_price
     assert _parse_price("12.34.56") is None
+
+
+# ── Task 5: Retailer-specific regression tests ────────────────────────────────
+
+def test_madewell_style_long_block():
+    """
+    Madewell DOM produces a candidate block where the material keyword 'fabric'
+    appears ~250 chars BEFORE the fiber percentages. With _CONTEXT_WINDOW=80 this
+    silently skips the composition. With _CONTEXT_WINDOW=250 it passes.
+    """
+    from scoring.extractor import extract_by_regex
+    text = (
+        "The cut: a fit for your forever-wardrobe that nods to the early 2000s, "
+        "these relaxed, straight-leg jeans are roomy through the seat, hip and rise "
+        "and are designed intentionally to be worn low slung at the hips. "
+        "The fabric: loosely woven for a drapey, soft-to-the-touch feel, our "
+        "summer-friendly cotton-blend Airy Denim has zero stretch. "
+        "Please note: for a baggier look, we recommend ordering one size larger than your normal size. "
+        "10\" rise, 15\" leg opening, 30\" inseam. "
+        "61% cotton, 39% lyocell."
+    )
+    result = extract_by_regex(text)
+    fibers = [r["fiber"] for r in result]
+    assert "cotton" in fibers, f"cotton not found in {fibers}"
+    assert "lyocell" in fibers, f"lyocell not found in {fibers}"
+
+
+def test_slash_separated_composition():
+    """
+    Madewell uses '61% cotton/39% TENCEL™ Lyocell' with slash separator and ™ symbol.
+    Regex must extract both fibers despite the non-ASCII character.
+    """
+    from scoring.extractor import extract_by_regex
+    # Short text so no context check
+    text = "61% cotton/39% TENCEL™ Lyocell."
+    result = extract_by_regex(text)
+    fibers = [r["fiber"] for r in result]
+    assert "cotton" in fibers, f"cotton not found in {fibers}"
+    assert "lyocell" in fibers, f"lyocell (TENCEL alias) not found in {fibers}"
+
+
+def test_composition_in_short_element_no_context_needed():
+    """
+    Direct percentage scan in popup.js produces short blocks like:
+    '61% cotton/39% TENCEL™ Lyocell.' (32 chars).
+    These should extract without needing a material context keyword.
+    """
+    from scoring.extractor import extract_by_regex
+    text = "61% cotton/39% TENCEL™ Lyocell."
+    assert len(text) <= 300  # must trigger is_short_text path
+    result = extract_by_regex(text)
+    assert len(result) == 2

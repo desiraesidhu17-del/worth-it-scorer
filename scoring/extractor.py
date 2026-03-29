@@ -55,8 +55,10 @@ _DETAIL_LABELS = frozenset([
     "fiber content", "fibre content",
 ])
 
-# Context window (chars around a % match to check for material keywords)
-_CONTEXT_WINDOW = 80
+# Context window (chars around a % match to check for material keywords).
+# 300 chars covers Madewell-style blocks where "The fabric:" label appears
+# ~255 chars before the actual fiber percentages in the same candidate block.
+_CONTEXT_WINDOW = 300
 
 
 @dataclass

@@ -3,9 +3,9 @@
   "configurations": [
     {
       "name": "worth-it-server",
-      "runtimeExecutable": "python",
-      "runtimeArgs": ["app.py"],
-      "port": 5000
+      "runtimeExecutable": "/Users/desiraesidhu/.pyenv/versions/3.11.9/bin/python",
+      "runtimeArgs": ["/Users/desiraesidhu/clothing_quality_backend/app.py"],
+      "port": 5001
     }
   ]
 }
