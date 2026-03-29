@@ -36,6 +36,7 @@ btn.addEventListener("click", async () => {
           json_ld_raw: [],
           meta: {},
           candidate_blocks: [],
+          price: null,
         };
 
         // Regex that matches any label mentioning fiber/material/composition keywords.
@@ -82,6 +83,49 @@ btn.addEventListener("click", async () => {
           if (WANTED.has(k) && v) r.meta[k] = v;
         });
 
+        // Price extraction — cascade through most-reliable to least-reliable sources
+        // 1. Schema.org microdata: <* itemprop="price" content="128.00">
+        const itempropEl = document.querySelector("[itemprop='price'][content]");
+        if (itempropEl) {
+          const n = parseFloat(itempropEl.getAttribute("content"));
+          if (!isNaN(n) && n > 0) r.price = n;
+        }
+
+        // 2. Shopify / common data attributes (prices often stored in cents)
+        if (!r.price) {
+          const dpEl = document.querySelector(
+            "[data-price],[data-product-price],[data-variant-price],[data-sale-price]"
+          );
+          if (dpEl) {
+            const attrs = ["data-price","data-product-price","data-variant-price","data-sale-price"];
+            for (const a of attrs) {
+              const raw = dpEl.getAttribute(a);
+              if (!raw) continue;
+              let n = parseFloat(raw.replace(/[^0-9.]/g, ""));
+              if (!isNaN(n) && n > 0) {
+                // Shopify stores in cents when value >= 1000 and raw has no decimal
+                if (n >= 1000 && !raw.includes(".")) n = n / 100;
+                r.price = Math.round(n * 100) / 100;
+                break;
+              }
+            }
+          }
+        }
+
+        // 3. Visible price element — class-name heuristics
+        if (!r.price) {
+          const priceEl = document.querySelector(
+            "[class*='sale-price'],[class*='price--sale'],[class*='price__sale']," +
+            "[class*='price__current'],[class*='price-item'],[class*='product-price']," +
+            "[class*='regular-price'],[class*='price__amount'],[class*='price']"
+          );
+          if (priceEl) {
+            const txt = priceEl.textContent || "";
+            const m = txt.match(/[\$£€¥]\s*(\d[\d,]*(?:\.\d{1,2})?)/);
+            if (m) r.price = parseFloat(m[1].replace(/,/g, ""));
+          }
+        }
+
         // Candidate block isolation
         const seen = new Set();
 
@@ -114,12 +158,28 @@ btn.addEventListener("click", async () => {
           }
         });
 
-        // Fallback: <details>/<summary> accordions
+        // Direct fiber percentage scan — catches elements like:
+        //   <li>61% cotton/39% TENCEL™ Lyocell.</li>
+        // These are short blocks (< 300 chars) so the backend skips the
+        // long-text context check and extracts the fibers directly.
+        const PCT_SCAN_RE = /\d+\s*%\s*[a-zA-Z]/;
+        document.querySelectorAll("li,p,td,span").forEach(el => {
+          const txt = (el.textContent || "").trim();
+          if (txt.length < 5 || txt.length > 300) return;
+          if (!PCT_SCAN_RE.test(txt)) return;
+          const h = txt.slice(0, 100);
+          if (!seen.has(h)) {
+            seen.add(h);
+            r.candidate_blocks.push(txt);
+          }
+        });
+
+        // Fallback: <details>/<summary> accordions (native HTML, not React)
         document.querySelectorAll("details").forEach(details => {
           const summary = details.querySelector("summary");
           if (!summary) return;
-          const st = summary.textContent.trim().toLowerCase();
-          if (LABELS.has(st)) {
+          const st = summary.textContent.trim();
+          if (st.length <= 80 && LABEL_RE.test(st)) {
             const text = details.textContent.trim().slice(0, 600);
             const h = text.slice(0, 100);
             if (!seen.has(h) && text.length > 10) {
