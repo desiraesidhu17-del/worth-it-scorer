@@ -85,10 +85,15 @@ btn.addEventListener("click", async () => {
 
         // Price extraction — cascade through most-reliable to least-reliable sources
         // 1. Schema.org microdata: <* itemprop="price" content="128.00">
-        const itempropEl = document.querySelector("[itemprop='price'][content]");
+        //    or <* itemprop="price">CA$217.00</*> (text content only, no content attr)
+        const itempropEl = document.querySelector("[itemprop='price']");
         if (itempropEl) {
-          const n = parseFloat(itempropEl.getAttribute("content"));
-          if (!isNaN(n) && n > 0) r.price = n;
+          const raw = (itempropEl.getAttribute("content") || itempropEl.textContent || "").trim();
+          if (raw) {
+            const cleaned = raw.replace(/,/g, "").replace(/[^\d.]/g, "");
+            const n = parseFloat(cleaned);
+            if (!isNaN(n) && n > 0) r.price = n;
+          }
         }
 
         // 2. Shopify / common data attributes (prices often stored in cents)
