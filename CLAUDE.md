@@ -26,20 +26,23 @@ A clothing quality scoring Chrome extension + Flask backend.
 - All price selectors in `try/catch` so failures never break fabric reading
 - `extractor.py` has `_parse_price_raw()` handling CA$, £, €, AU$ etc.
 - 33/33 tests passing
+- **Cold Data visual redesign — COMPLETE and deployed to Railway**
 
-### 🔲 Next Up — Cold Data Visual Redesign (APPROVED, NOT STARTED)
-Full plan at: `docs/plans/2026-03-29-cold-data-redesign-plan.md`
-
-**Use `superpowers:executing-plans` to run the 8 tasks. Start with Task 1.**
-
-Summary of the design:
-- Font: Space Mono (Google Fonts)
-- Background: cream `#f5f2eb` (was dark `#0f0f0f`)
-- Score: large orange number replaces SVG circle
+### Cold Data Theme (live)
+- Font: Space Mono throughout
+- Background: cream `#f5f2eb`
+- Score: large `4rem` orange number (`#f5820a`), thin rule, `/100`
 - Section headers: `/MATERIAL ANALYSIS`, `/PROPERTIES`, `/CONSTRUCTION`
-- Stat rows with dotted leaders
+- Stat rows: vertical with dotted leaders (`....`)
+- Confidence: `[HIGH CONFIDENCE]` bracket style
+- Buttons: `[ SCAN PRODUCT ]` / `[ DOWNLOAD CARD ]` — invert on hover
 - Zero border-radius everywhere
-- Bracket-style buttons: `[ DOWNLOAD CARD ]`
+- Construction signals: outlined `[ chip ]` style
+
+### 🔲 Next Up (backlog — lower priority)
+- Fix verdict/price-label messaging inconsistency (low score + "fairly priced" contradiction)
+- Test more retailers (H&M, Zara, Uniqlo)
+- Add more metrics to result card (needs brainstorm + plan first)
 
 ### Known Issues
 - Claude in Chrome MCP not connected (workaround: DevTools console snippets)
@@ -59,7 +62,7 @@ scoring/
 extension/
   popup.js                 Chrome MV3 — DOM scraping + price extraction
 templates/index.html       Web frontend
-static/style.css           All styles (currently dark — redesign pending)
+static/style.css           All styles (Cold Data theme — cream, Space Mono, zero radius)
 static/app.js              Frontend JS — renders result card
 docs/plans/                Design docs + implementation plans
 ```
@@ -99,3 +102,4 @@ pytest scoring/test_extractor.py   # should be 33 passed
 | 2026-03-10 | Built extension + extraction pipeline, deployed to Railway |
 | 2026-03-29 | Fixed fabric extraction (context window, LABELS bug), added price extraction |
 | 2026-03-30 | Fixed price bugs (CA$ parsing, itemprop selector, DOM scan crash), designed Cold Data redesign |
+| 2026-03-30 | Implemented Cold Data redesign (all 8 tasks): Space Mono, cream palette, flat score number, /SECTION headers, dotted stat rows, bracket UI, deployed to Railway |
