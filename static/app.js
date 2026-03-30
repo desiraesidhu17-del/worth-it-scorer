@@ -157,11 +157,6 @@ function renderResult(r) {
   const cpw = r.cost_per_wash || {};
 
   document.getElementById("score-number").textContent = score;
-  const CIRCUMFERENCE = 326.73;
-  const offset = CIRCUMFERENCE - (score / 100) * CIRCUMFERENCE;
-  const arc = document.getElementById("score-arc");
-  arc.style.strokeDashoffset = offset;
-  arc.style.stroke = scoreColor(score);
   document.getElementById("score-number").style.color = scoreColor(score);
 
   document.getElementById("verdict-sentence").textContent = r.verdict_sentence || "";
@@ -307,7 +302,8 @@ document.getElementById("btn-reset").addEventListener("click", () => {
     if (el) el.value = "";
   });
   document.getElementById("category-manual").value = "other";
-  document.getElementById("score-arc").style.strokeDashoffset = 326.73;
+  document.getElementById("score-number").textContent = "—";
+  document.getElementById("score-number").style.color = "";
 });
 
 /* ── UI helpers ──────────────────────────────────────────────────────────── */
