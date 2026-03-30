@@ -543,11 +543,11 @@ select { appearance: none; cursor: pointer; }
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 520px) {
-  .card-top { flex-direction: column; text-align: center; }
+  .card-top { flex-direction: column; gap: 16px; }
   .card-top-right { text-align: left; }
-  .stats-row { grid-template-columns: 1fr; }
-  .stat + .stat { border-left: none; border-top: 1px solid var(--border); }
-  .prop-row { grid-template-columns: 110px 1fr 36px; }
+  .stats-row { flex-direction: column; }
+  .prop-row { grid-template-columns: 110px 1fr 32px; }
   .field-row.two-col { grid-template-columns: 1fr; }
   header { padding: 16px; }
+  .score-number { font-size: 3rem; }
 }
