@@ -131,6 +131,23 @@ btn.addEventListener("click", async () => {
           }
         }
 
+        // 4. Broad DOM scan — catches custom web components / unusual class names
+        // Scans short leaf elements for any currency+number pattern
+        if (!r.price) {
+          const PRICE_RE = /(?:[A-Z]{0,3}\$|[£€¥₩₹])\s*([\d,]+(?:\.\d{1,2})?)/;
+          const allEls = document.querySelectorAll("span,div,p,strong,b,ins");
+          for (const el of allEls) {
+            if (el.children.length > 2) continue;        // skip containers
+            const txt = (el.textContent || "").trim();
+            if (txt.length < 2 || txt.length > 25) continue; // prices are short
+            const m = txt.match(PRICE_RE);
+            if (m) {
+              const n = parseFloat(m[1].replace(/,/g, ""));
+              if (!isNaN(n) && n > 0 && n < 100000) { r.price = n; break; }
+            }
+          }
+        }
+
         // Candidate block isolation
         const seen = new Set();
 

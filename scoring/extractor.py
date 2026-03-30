@@ -29,6 +29,20 @@ from .fiber_vocab import normalize_fiber, is_known_fiber, get_material_type
 
 log = logging.getLogger(__name__)
 
+
+def _parse_price_raw(value) -> float | None:
+    """Strip currency symbols/codes and return float, or None on failure.
+    Handles: $217, CA$217, £89.99, €120, AU$145, 1,234.56, plain 217
+    """
+    if value is None:
+        return None
+    try:
+        cleaned = re.sub(r"[^\d.]", "", str(value).replace(",", ""))
+        return float(cleaned) if cleaned else None
+    except (ValueError, TypeError):
+        return None
+
+
 # ── Material context keywords — regex must find these near a % match ──────────
 _MATERIAL_CONTEXT_RE = re.compile(
     r"\b(material|fabric|shell|lining|body|composition|trim|care|content|"
@@ -167,10 +181,8 @@ def extract_from_payload(payload: dict) -> ExtractionResult:
 
     # Override price/category from payload if provided
     if payload.get("price"):
-        try:
-            result.price = float(str(payload["price"]).replace("$", "").strip())
-        except (ValueError, TypeError):
-            pass
+        result.price = _parse_price_raw(payload["price"])
+
     if payload.get("category"):
         result.category = payload["category"]
 
@@ -296,10 +308,7 @@ def _extract_json_ld(json_ld_blocks: list) -> ExtractionResult:
             offers = offers[0] if offers else {}
         price_raw = offers.get("price") or block.get("price")
         if price_raw:
-            try:
-                result.price = float(str(price_raw).replace("$", "").strip())
-            except (ValueError, TypeError):
-                pass
+            result.price = _parse_price_raw(price_raw)
 
         result.brand = (
             (block.get("brand") or {}).get("name")
@@ -333,11 +342,10 @@ def _apply_meta(result: ExtractionResult, meta: dict) -> None:
     if not result.price:
         for key in ("product:price:amount", "og:price:amount", "price"):
             if meta.get(key):
-                try:
-                    result.price = float(str(meta[key]).replace("$", "").strip())
+                parsed = _parse_price_raw(meta[key])
+                if parsed:
+                    result.price = parsed
                     break
-                except (ValueError, TypeError):
-                    pass
     if not result.brand and meta.get("og:site_name"):
         result.brand = meta["og:site_name"]
     if not result.product_name and meta.get("og:title"):
