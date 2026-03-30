@@ -223,8 +223,8 @@ select { appearance: none; cursor: pointer; }
 }
 
 .spinner {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   border: 2px solid var(--border);
   border-top-color: var(--text);
   border-radius: 50%;
@@ -236,13 +236,13 @@ select { appearance: none; cursor: pointer; }
 
 /* ── Error ───────────────────────────────────────────────────────────────── */
 #error-box {
-  background: #1a0a0a;
-  border: 1px solid #4a1515;
+  background: #f5ece9;
+  border: 1px solid #c0392b;
   border-radius: 0;
   padding: 16px 20px;
   color: var(--red);
   margin-top: 24px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 /* ── Section headers ─────────────────────────────────────────────────────── */
@@ -384,8 +384,8 @@ select { appearance: none; cursor: pointer; }
 
 /* Price detail */
 .price-detail {
-  padding: 14px 24px;
-  font-size: 0.88rem;
+  padding: 10px 24px 14px;
+  font-size: 0.82rem;
   color: var(--muted);
   border-bottom: 1px solid var(--border);
   line-height: 1.5;
@@ -488,12 +488,16 @@ select { appearance: none; cursor: pointer; }
 }
 
 .construction-signals li {
-  font-size: 0.75rem;
-  background: var(--border);
+  font-size: 0.72rem;
+  border: 1px solid var(--border);
   padding: 2px 8px;
   border-radius: 0;
   color: var(--muted);
+  background: none;
 }
+
+.construction-signals li::before { content: "[ "; }
+.construction-signals li::after  { content: " ]"; }
 
 /* Card footer */
 .card-footer {

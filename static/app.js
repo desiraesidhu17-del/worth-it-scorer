@@ -11,7 +11,7 @@
   const status = document.createElement('p');
   status.id = 'extension-status';
   status.textContent = 'Loading score\u2026';
-  status.style.cssText = 'padding:20px;color:#aaa;font-size:14px;';
+  status.style.cssText = 'padding:20px;color:#8a8070;font-size:13px;font-family:monospace;';
   document.body.prepend(status);
 
   fetch(`/api/result/${resultId}`)
@@ -281,7 +281,7 @@ function captureCard(finish) {
   // html2canvas doesn't support CSS custom properties on older browsers
   const card = document.getElementById("card-inner");
   html2canvas(card, {
-    backgroundColor: "#1a1a1a",
+    backgroundColor: "#f5f2eb",
     scale: 2,
     useCORS: true,
     logging: false,
