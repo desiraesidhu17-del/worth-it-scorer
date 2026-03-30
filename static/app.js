@@ -194,9 +194,14 @@ function renderResult(r) {
 
 function renderConstruction(c) {
   const row = document.getElementById("construction-row");
-  if (!c) { row.hidden = true; return; }
-
+  const constrHeader = document.querySelector(".section-header-construction");
+  if (!c) {
+    row.hidden = true;
+    if (constrHeader) constrHeader.hidden = true;
+    return;
+  }
   row.hidden = false;
+  if (constrHeader) constrHeader.hidden = false;
 
   const scoreVal = c.score || 0;
   const scoreEl = document.getElementById("construction-score");

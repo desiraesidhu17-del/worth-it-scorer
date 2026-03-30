@@ -237,6 +237,17 @@ select { appearance: none; cursor: pointer; }
   font-size: 0.9rem;
 }
 
+/* ── Section headers ─────────────────────────────────────────────────────── */
+.section-header {
+  padding: 10px 24px 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+
 /* ── Result card ─────────────────────────────────────────────────────────── */
 #result-card {
   margin-top: 40px;
@@ -322,30 +333,45 @@ select { appearance: none; cursor: pointer; }
 
 /* Stats row */
 .stats-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  flex-direction: column;
   border-bottom: 1px solid var(--border);
 }
 
 .stat {
-  padding: 16px 20px;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 8px 24px;
+  border-bottom: 1px solid var(--border);
+  gap: 8px;
 }
 
-.stat + .stat { border-left: 1px solid var(--border); }
+.stat:last-child { border-bottom: none; }
 
 .stat-label {
   font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   color: var(--muted);
+  flex-shrink: 0;
+}
+
+.stat-label::after {
+  content: " ....................................................";
+  color: var(--border);
+  letter-spacing: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  display: inline-block;
+  max-width: 100px;
 }
 
 .stat-value {
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: right;
+  flex-shrink: 0;
 }
 
 /* Price detail */
