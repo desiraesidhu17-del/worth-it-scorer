@@ -315,14 +315,14 @@ select { appearance: none; cursor: pointer; }
 .confidence-badge {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  margin-top: 8px;
 }
 
 #confidence-label {
   font-size: 0.72rem;
-  text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .confidence-note {
@@ -394,14 +394,16 @@ select { appearance: none; cursor: pointer; }
 
 .prop-row {
   display: grid;
-  grid-template-columns: 140px 1fr 40px;
+  grid-template-columns: 150px 1fr 32px;
   align-items: center;
-  gap: 12px;
-  font-size: 0.85rem;
+  gap: 16px;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .bar-track {
-  height: 6px;
+  height: 4px;
   background: var(--border);
   border-radius: 0;
   overflow: hidden;
@@ -414,7 +416,7 @@ select { appearance: none; cursor: pointer; }
   width: 0%;
 }
 
-.prop-val { font-size: 0.8rem; color: var(--muted); text-align: right; }
+.prop-val { font-size: 0.78rem; color: var(--text); text-align: right; font-weight: 700; }
 
 /* ── Construction row ────────────────────────────────────────────────────── */
 .construction-row {

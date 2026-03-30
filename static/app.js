@@ -163,7 +163,7 @@ function renderResult(r) {
 
   const conf = r.confidence || "low";
   const confLabel = document.getElementById("confidence-label");
-  confLabel.textContent = `${conf.toUpperCase()} CONFIDENCE`;
+  confLabel.textContent = `[${conf.toUpperCase()} CONFIDENCE]`;
   confLabel.style.color = conf === "high" ? "var(--green)" : conf === "medium" ? "var(--yellow)" : "var(--red)";
   const notes = r.confidence_notes || [];
   document.getElementById("confidence-note").textContent = notes[notes.length - 1] || "";
@@ -217,7 +217,7 @@ function renderConstruction(c) {
   // Confidence label
   const conf = c.confidence || "low";
   const confEl = document.getElementById("construction-conf");
-  confEl.textContent = `${conf.toUpperCase()} CONFIDENCE`;
+  confEl.textContent = `[${conf.toUpperCase()} CONFIDENCE]`;
   confEl.style.color = conf === "high" ? "var(--green)" : conf === "medium" ? "var(--yellow)" : "var(--red)";
 
   // Price floor note
