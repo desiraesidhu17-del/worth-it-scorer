@@ -125,7 +125,7 @@ select {
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text);
-  border-radius: 8px;
+  border-radius: 0;
   padding: 10px 14px;
   font-size: 0.95rem;
   outline: none;
@@ -148,7 +148,7 @@ select { appearance: none; cursor: pointer; }
   background: var(--text);
   color: var(--bg);
   border: none;
-  border-radius: 8px;
+  border-radius: 0;
   padding: 12px;
   font-size: 1rem;
   font-weight: 600;
@@ -163,7 +163,7 @@ select { appearance: none; cursor: pointer; }
 /* ── Drop zone ───────────────────────────────────────────────────────────── */
 .drop-zone {
   border: 2px dashed var(--border);
-  border-radius: var(--radius);
+  border-radius: 0;
   padding: 40px 24px;
   text-align: center;
   color: var(--muted);
@@ -188,7 +188,7 @@ select { appearance: none; cursor: pointer; }
   width: 100%;
   max-height: 300px;
   object-fit: contain;
-  border-radius: var(--radius);
+  border-radius: 0;
   border: 1px solid var(--border);
 }
 
@@ -230,7 +230,7 @@ select { appearance: none; cursor: pointer; }
 #error-box {
   background: #1a0a0a;
   border: 1px solid #4a1515;
-  border-radius: var(--radius);
+  border-radius: 0;
   padding: 16px 20px;
   color: var(--red);
   margin-top: 24px;
@@ -249,9 +249,9 @@ select { appearance: none; cursor: pointer; }
 }
 
 #card-inner {
-  background: var(--surface);
+  background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: 0;
   overflow: hidden;
 }
 
@@ -388,13 +388,13 @@ select { appearance: none; cursor: pointer; }
 .bar-track {
   height: 6px;
   background: var(--border);
-  border-radius: 3px;
+  border-radius: 0;
   overflow: hidden;
 }
 
 .bar {
   height: 100%;
-  border-radius: 3px;
+  border-radius: 0;
   transition: width 0.7s cubic-bezier(.4,0,.2,1);
   width: 0%;
 }
@@ -466,7 +466,7 @@ select { appearance: none; cursor: pointer; }
   font-size: 0.75rem;
   background: var(--border);
   padding: 2px 8px;
-  border-radius: 4px;
+  border-radius: 0;
   color: var(--muted);
 }
 
@@ -482,7 +482,7 @@ select { appearance: none; cursor: pointer; }
   background: var(--text);
   color: var(--bg);
   border: none;
-  border-radius: 8px;
+  border-radius: 0;
   padding: 10px;
   font-size: 0.9rem;
   font-weight: 600;
@@ -496,7 +496,7 @@ select { appearance: none; cursor: pointer; }
   background: none;
   border: 1px solid var(--border);
   color: var(--muted);
-  border-radius: 8px;
+  border-radius: 0;
   padding: 10px 20px;
   font-size: 0.9rem;
   cursor: pointer;
