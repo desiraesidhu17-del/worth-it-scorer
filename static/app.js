@@ -259,7 +259,7 @@ document.getElementById("btn-download").addEventListener("click", () => {
   btn.disabled = true;
   btn.textContent = "Preparing…";
 
-  const finish = () => { btn.disabled = false; btn.textContent = "Download card"; };
+  const finish = () => { btn.disabled = false; btn.textContent = "[ DOWNLOAD CARD ]"; };
 
   if (typeof html2canvas !== "undefined") {
     captureCard(finish);
