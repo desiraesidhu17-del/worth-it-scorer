@@ -83,69 +83,74 @@ btn.addEventListener("click", async () => {
           if (WANTED.has(k) && v) r.meta[k] = v;
         });
 
-        // Price extraction — cascade through most-reliable to least-reliable sources
-        // 1. Schema.org microdata: <* itemprop="price" content="128.00">
-        //    or <* itemprop="price">CA$217.00</*> (text content only, no content attr)
-        const itempropEl = document.querySelector("[itemprop='price']");
-        if (itempropEl) {
-          const raw = (itempropEl.getAttribute("content") || itempropEl.textContent || "").trim();
-          if (raw) {
-            const cleaned = raw.replace(/,/g, "").replace(/[^\d.]/g, "");
-            const n = parseFloat(cleaned);
-            if (!isNaN(n) && n > 0) r.price = n;
+        // Price extraction — wrapped in try/catch so any failure is non-fatal
+        try {
+          // 1. Schema.org microdata: <* itemprop="price" content="128.00">
+          //    or <* itemprop="price">CA$217.00</*> (text content only, no content attr)
+          const itempropEl = document.querySelector("[itemprop='price']");
+          if (itempropEl) {
+            const raw = (itempropEl.getAttribute("content") || itempropEl.textContent || "").trim();
+            if (raw) {
+              const cleaned = raw.replace(/,/g, "").replace(/[^\d.]/g, "");
+              const n = parseFloat(cleaned);
+              if (!isNaN(n) && n > 0) r.price = n;
+            }
           }
-        }
 
-        // 2. Shopify / common data attributes (prices often stored in cents)
-        if (!r.price) {
-          const dpEl = document.querySelector(
-            "[data-price],[data-product-price],[data-variant-price],[data-sale-price]"
-          );
-          if (dpEl) {
-            const attrs = ["data-price","data-product-price","data-variant-price","data-sale-price"];
-            for (const a of attrs) {
-              const raw = dpEl.getAttribute(a);
-              if (!raw) continue;
-              let n = parseFloat(raw.replace(/[^0-9.]/g, ""));
-              if (!isNaN(n) && n > 0) {
-                // Shopify stores in cents when value >= 1000 and raw has no decimal
-                if (n >= 1000 && !raw.includes(".")) n = n / 100;
-                r.price = Math.round(n * 100) / 100;
-                break;
+          // 2. Shopify / common data attributes (prices often stored in cents)
+          if (!r.price) {
+            const dpEl = document.querySelector(
+              "[data-price],[data-product-price],[data-variant-price],[data-sale-price]"
+            );
+            if (dpEl) {
+              const attrs = ["data-price","data-product-price","data-variant-price","data-sale-price"];
+              for (const a of attrs) {
+                const raw = dpEl.getAttribute(a);
+                if (!raw) continue;
+                let n = parseFloat(raw.replace(/[^0-9.]/g, ""));
+                if (!isNaN(n) && n > 0) {
+                  // Shopify stores in cents when value >= 1000 and raw has no decimal
+                  if (n >= 1000 && !raw.includes(".")) n = n / 100;
+                  r.price = Math.round(n * 100) / 100;
+                  break;
+                }
               }
             }
           }
-        }
 
-        // 3. Visible price element — class-name heuristics
-        if (!r.price) {
-          const priceEl = document.querySelector(
-            "[class*='sale-price'],[class*='price--sale'],[class*='price__sale']," +
-            "[class*='price__current'],[class*='price-item'],[class*='product-price']," +
-            "[class*='regular-price'],[class*='price__amount'],[class*='price']"
-          );
-          if (priceEl) {
-            const txt = priceEl.textContent || "";
-            const m = txt.match(/[\$£€¥]\s*(\d[\d,]*(?:\.\d{1,2})?)/);
-            if (m) r.price = parseFloat(m[1].replace(/,/g, ""));
-          }
-        }
-
-        // 4. Broad DOM scan — catches custom web components / unusual class names
-        // Scans short leaf elements for any currency+number pattern
-        if (!r.price) {
-          const PRICE_RE = /(?:[A-Z]{0,3}\$|[£€¥₩₹])\s*([\d,]+(?:\.\d{1,2})?)/;
-          const allEls = document.querySelectorAll("span,div,p,strong,b,ins");
-          for (const el of allEls) {
-            if (el.children.length > 2) continue;        // skip containers
-            const txt = (el.textContent || "").trim();
-            if (txt.length < 2 || txt.length > 25) continue; // prices are short
-            const m = txt.match(PRICE_RE);
-            if (m) {
-              const n = parseFloat(m[1].replace(/,/g, ""));
-              if (!isNaN(n) && n > 0 && n < 100000) { r.price = n; break; }
+          // 3. Visible price element — class-name heuristics
+          if (!r.price) {
+            const priceEl = document.querySelector(
+              "[class*='sale-price'],[class*='price--sale'],[class*='price__sale']," +
+              "[class*='price__current'],[class*='price-item'],[class*='product-price']," +
+              "[class*='regular-price'],[class*='price__amount'],[class*='price']"
+            );
+            if (priceEl) {
+              const txt = priceEl.textContent || "";
+              const m = txt.match(/[\$£€¥]\s*(\d[\d,]*(?:\.\d{1,2})?)/);
+              if (m) r.price = parseFloat(m[1].replace(/,/g, ""));
             }
           }
+
+          // 4. Broad DOM scan — catches custom web components / unusual class names
+          // Scans short leaf elements for any currency+number pattern
+          if (!r.price) {
+            const PRICE_RE = /(?:[A-Z]{0,3}\$|[£€¥])\s*([\d,]+(?:\.\d{1,2})?)/;
+            const allEls = Array.from(document.querySelectorAll("span,strong,b,ins"));
+            for (let i = 0; i < Math.min(allEls.length, 500); i++) {
+              const el = allEls[i];
+              if (el.children.length > 1) continue;        // skip containers
+              const txt = (el.textContent || "").trim();
+              if (txt.length < 2 || txt.length > 20) continue; // prices are short
+              const m = txt.match(PRICE_RE);
+              if (m) {
+                const n = parseFloat(m[1].replace(/,/g, ""));
+                if (!isNaN(n) && n > 0 && n < 100000) { r.price = n; break; }
+              }
+            }
+          }
+        } catch (_priceErr) {
+          // Price extraction failed silently — fabric and scoring still work
         }
 
         // Candidate block isolation
