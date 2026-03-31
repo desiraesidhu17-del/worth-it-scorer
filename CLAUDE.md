@@ -103,3 +103,4 @@ pytest scoring/test_extractor.py   # should be 33 passed
 | 2026-03-29 | Fixed fabric extraction (context window, LABELS bug), added price extraction |
 | 2026-03-30 | Fixed price bugs (CA$ parsing, itemprop selector, DOM scan crash), designed Cold Data redesign |
 | 2026-03-30 | Implemented Cold Data redesign (all 8 tasks): Space Mono, cream palette, flat score number, /SECTION headers, dotted stat rows, bracket UI, deployed to Railway |
+| 2026-03-31 | UX polish: verdict rewrite (decision-assistant tone), Price fit label, CPW context, construction unification, download button animation |
