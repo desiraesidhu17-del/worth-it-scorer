@@ -317,7 +317,7 @@ select { appearance: none; cursor: pointer; }
 .verdict-sentence {
   font-size: 1rem;
   line-height: 1.5;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 }
 
 .confidence-badge {
@@ -330,7 +330,7 @@ select { appearance: none; cursor: pointer; }
 #confidence-label {
   font-size: 0.72rem;
   letter-spacing: 0.08em;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .confidence-note {
