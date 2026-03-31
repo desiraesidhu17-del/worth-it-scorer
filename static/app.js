@@ -254,9 +254,15 @@ function scoreColor(score) {
 document.getElementById("btn-download").addEventListener("click", () => {
   const btn = document.getElementById("btn-download");
   btn.disabled = true;
-  btn.textContent = "Preparing…";
+  btn.classList.add("exporting");
+  btn.dataset.label = btn.textContent;
+  btn.textContent = "";
 
-  const finish = () => { btn.disabled = false; btn.textContent = "[ DOWNLOAD CARD ]"; };
+  const finish = () => {
+    btn.disabled = false;
+    btn.classList.remove("exporting");
+    btn.textContent = btn.dataset.label || "[ DOWNLOAD CARD ]";
+  };
 
   if (typeof html2canvas !== "undefined") {
     captureCard(finish);

@@ -486,6 +486,24 @@ select { appearance: none; cursor: pointer; }
 
 .btn-download:hover { background: var(--bg); color: var(--text); }
 
+@keyframes ellipsis {
+  0%   { content: "[ EXPORTING ]"; }
+  33%  { content: "[ EXPORTING . ]"; }
+  66%  { content: "[ EXPORTING .. ]"; }
+  100% { content: "[ EXPORTING ... ]"; }
+}
+
+.btn-download.exporting {
+  opacity: 0.7;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn-download.exporting::before {
+  content: "[ EXPORTING ]";
+  animation: ellipsis 1.2s steps(1) infinite;
+}
+
 .btn-reset {
   background: none;
   border: 1px solid var(--border);
