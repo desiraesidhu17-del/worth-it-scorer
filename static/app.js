@@ -212,22 +212,13 @@ function renderConstruction(c) {
 
   const scoreVal = c.score || 0;
   const scoreEl = document.getElementById("construction-score");
-  scoreEl.textContent = scoreVal.toFixed(1);
-  // Color: treat /10 same scale as /100 → multiply by 10 for scoreColor
+  scoreEl.textContent = `${scoreVal.toFixed(1)} / 10`;
   scoreEl.style.color = scoreColor(scoreVal * 10);
 
-  // Bar: score is /10 so multiply by 10 to get %
   const bar = document.getElementById("bar-construction");
   bar.style.width = `${scoreVal * 10}%`;
   bar.style.background = scoreColor(scoreVal * 10);
 
-  // Confidence label
-  const conf = c.confidence || "low";
-  const confEl = document.getElementById("construction-conf");
-  confEl.textContent = `[${conf.toUpperCase()} CONFIDENCE]`;
-  confEl.style.color = conf === "high" ? "var(--green)" : conf === "medium" ? "var(--yellow)" : "var(--red)";
-
-  // Price floor note
   const noteEl = document.getElementById("construction-floor-note");
   if (c.price_floor_note) {
     noteEl.textContent = c.price_floor_note;
@@ -236,7 +227,6 @@ function renderConstruction(c) {
     noteEl.hidden = true;
   }
 
-  // Construction signals as chips
   const sigList = document.getElementById("construction-signals");
   sigList.innerHTML = "";
   (c.signals_found || []).forEach(sig => {

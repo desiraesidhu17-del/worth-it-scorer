@@ -432,44 +432,6 @@ select { appearance: none; cursor: pointer; }
   border-bottom: 1px solid var(--border);
 }
 
-.construction-header {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin-bottom: 4px;
-}
-
-.construction-label {
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--muted);
-  flex-shrink: 0;
-}
-
-.construction-score-wrap {
-  display: flex;
-  align-items: baseline;
-  gap: 2px;
-}
-
-#construction-score {
-  font-size: 1.05rem;
-  font-weight: 600;
-}
-
-.construction-denom {
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-
-.construction-conf {
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-weight: 600;
-  margin-left: auto;
-}
 
 .construction-floor-note {
   font-size: 0.8rem;
