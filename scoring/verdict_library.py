@@ -19,112 +19,112 @@ WORTH_IT_VERDICTS: dict[tuple[str, str], str] = {
 
     # Very low (0–25)
     ("very_low", "synthetic"): (
-        "The fiber composition here is associated with fast-fashion quality. "
-        "Expect visible pilling and shape loss within a few months of regular wear."
+        "Expect pilling within one season. "
+        "Not worth mid-range pricing."
     ),
     ("very_low", "cellulosic"): (
-        "This blend of regenerated fibers is predicted to lose shape and surface quality quickly. "
-        "The material science does not support the price."
+        "This blend is predicted to lose structure quickly. "
+        "The material science doesn't support the price."
     ),
     ("very_low", "mixed"): (
-        "This composition sits at the low end of predicted durability. "
-        "The combination of fibers is associated with early pilling and reduced colorfastness."
+        "Low predicted durability across the board. "
+        "The fiber combination is associated with early wear."
     ),
     ("very_low", "natural"): (
-        "While natural fibers, this specific blend is associated with significant durability concerns. "
-        "The predicted lifespan is short for the price."
+        "Natural fibers, but a combination associated with poor durability. "
+        "Short lifespan for the price."
     ),
     ("very_low", "premium"): (
-        "Despite premium fiber branding, this composition is associated with poor durability. "
+        "Premium branding, low durability. "
         "Price does not reflect the likely wear experience."
     ),
 
     # Low (26–45)
     ("low", "synthetic"): (
-        "This synthetic blend is predicted to pill noticeably within the first season. "
-        "The durability score does not justify a mid-range price."
+        "Will pill noticeably within the first season. "
+        "Durability doesn't justify a mid-range price."
     ),
     ("low", "cellulosic"): (
-        "Viscose and rayon-dominant fabrics are predicted to lose structure and surface quality "
-        "faster than comparable natural fibers at this price. Handle with care."
+        "Viscose and rayon lose structure faster than comparable naturals at this price. "
+        "Handle with care."
     ),
     ("low", "mixed"): (
-        "The fiber mix here pulls the durability score down. "
-        "Some components are predicted to perform well; others will likely show wear early."
+        "Mixed signals from the fiber composition. "
+        "Some components hold up; others will show wear early."
     ),
     ("low", "natural"): (
-        "Natural fiber content helps, but this specific composition is associated with "
-        "moderate durability concerns. Worth considering if you plan to wear it lightly."
+        "Natural fiber content helps, but durability is still a concern. "
+        "Best for light, occasional wear."
     ),
     ("low", "premium"): (
-        "The premium fiber name does not guarantee durability at this blend ratio. "
-        "Predicted performance is below what the price typically signals."
+        "Premium fiber name, below-average blend ratio. "
+        "Predicted performance doesn't match the price."
     ),
 
     # Mid (46–65)
     ("mid", "synthetic"): (
-        "A solid synthetic blend with decent predicted durability. "
-        "Not exceptional, but reasonable quality for the category."
+        "Decent predicted durability for synthetics. "
+        "Reasonable quality for the category and price."
     ),
     ("mid", "cellulosic"): (
-        "This regenerated cellulose blend offers moderate durability and good drape. "
-        "With proper care, it should hold up for regular rotation."
+        "Moderate durability with good drape. "
+        "Should hold up for regular rotation with proper care."
     ),
     ("mid", "mixed"): (
-        "A mixed composition with balanced predicted performance. "
-        "Not a standout, but the fiber science is consistent with mid-range expectations."
+        "Balanced composition with middle-of-the-road predicted performance. "
+        "No major red flags."
     ),
     ("mid", "natural"): (
-        "Good natural fiber content with moderate predicted durability. "
-        "Care behavior will have a significant impact on actual lifespan."
+        "Good natural fiber content with moderate durability. "
+        "Care routine will drive actual lifespan."
     ),
     ("mid", "premium"): (
-        "Premium fiber content with solid predicted performance. "
-        "Worth the investment if priced within the mid range for this category."
+        "Premium fibers at a mid-range blend. "
+        "Solid performance if priced accordingly."
     ),
 
     # Good (66–80)
     ("good", "synthetic"): (
-        "Strong predicted durability for a synthetic blend. "
-        "The fiber composition is consistent with a garment that holds up well over time."
+        "Strong durability for a synthetic blend. "
+        "Built to handle regular rotation."
     ),
     ("good", "cellulosic"): (
-        "Above-average predicted durability for a cellulosic blend. "
-        "The fiber science backs up the price at this level."
+        "Above-average durability for a cellulosic blend. "
+        "The fiber science backs up the price."
     ),
     ("good", "mixed"): (
-        "Well-balanced fiber composition with strong predicted durability. "
-        "The material score supports the price point."
+        "Well-balanced composition with strong predicted durability. "
+        "Worth the price at this level."
     ),
     ("good", "natural"): (
-        "Solid natural fiber composition with good predicted performance. "
+        "Solid natural fiber performance. "
         "This is the quality level where the fiber science earns its keep."
     ),
     ("good", "premium"): (
-        "The premium fibers here are doing real work. "
-        "Predicted durability is strong and the composition backs up the investment."
+        "Premium fibers doing real work here. "
+        "Durability is strong and the composition backs the investment."
     ),
 
     # Excellent (81–100)
     ("excellent", "synthetic"): (
-        "Exceptional predicted durability for this fiber class. "
-        "The composition is engineered for performance and longevity."
+        "Exceptional durability for this fiber class. "
+        "Engineered for performance and longevity."
     ),
     ("excellent", "cellulosic"): (
-        "Best-in-class predicted durability for a cellulosic blend. "
+        "Best-in-class durability for a cellulosic blend. "
         "This is what quality looks like at the fiber level."
     ),
     ("excellent", "mixed"): (
-        "This is genuinely good value — the fiber composition backs it up. "
-        "Predicted durability is in the top tier for this category."
+        "Genuinely good value — the fiber composition backs it up. "
+        "Top-tier durability for the category."
     ),
     ("excellent", "natural"): (
         "Excellent natural fiber composition with top-tier predicted durability. "
-        "The material science supports the price and then some."
+        "Worth the investment."
     ),
     ("excellent", "premium"): (
-        "Premium fibers used correctly. "
-        "This composition is associated with exceptional longevity and is worth the investment."
+        "Premium fibers, premium performance. "
+        "The material science earns the price."
     ),
 }
 
