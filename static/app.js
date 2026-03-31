@@ -175,9 +175,16 @@ function renderResult(r) {
   document.getElementById("stat-pressure").textContent = pp.label || "—";
   document.getElementById("stat-pressure").style.color = pressureColors[pp.level] || "var(--muted)";
 
+  const cpwNote = document.getElementById("cpw-note");
   if (cpw.cost_per_wash_low != null) {
     document.getElementById("stat-cpw").textContent =
       `$${cpw.cost_per_wash_low.toFixed(2)}–$${cpw.cost_per_wash_high.toFixed(2)}`;
+  }
+  if (cpw.note) {
+    cpwNote.textContent = cpw.note;
+    cpwNote.hidden = false;
+  } else {
+    cpwNote.hidden = true;
   }
 
   const pd = document.getElementById("price-detail");
