@@ -119,16 +119,31 @@ btn.addEventListener("click", async () => {
           }
 
           // 3. Visible price element — class-name heuristics
+          // Uses querySelectorAll + strikethrough check to avoid picking up
+          // the crossed-out original price on sale pages (Aritzia, etc.)
           if (!r.price) {
-            const priceEl = document.querySelector(
-              "[class*='sale-price'],[class*='price--sale'],[class*='price__sale']," +
-              "[class*='price__current'],[class*='price-item'],[class*='product-price']," +
-              "[class*='regular-price'],[class*='price__amount'],[class*='price']"
-            );
-            if (priceEl) {
-              const txt = priceEl.textContent || "";
-              const m = txt.match(/[\$£€¥]\s*(\d[\d,]*(?:\.\d{1,2})?)/);
-              if (m) r.price = parseFloat(m[1].replace(/,/g, ""));
+            const isStrikethrough = el => {
+              try {
+                const s = window.getComputedStyle(el);
+                return s.textDecorationLine.includes("line-through") ||
+                       s.textDecoration.includes("line-through");
+              } catch { return false; }
+            };
+            // Note: [class*='regular-price'] intentionally excluded — it matches crossed-out prices.
+            // Sale-specific selectors are tried first; generic [class*='price'] is last resort.
+            const selectorGroups = [
+              "[class*='sale-price'],[class*='price--sale'],[class*='price__sale'],[class*='price__current']",
+              "[class*='price-item'],[class*='product-price'],[class*='price__amount']",
+              "[class*='price']",
+            ];
+            for (const group of selectorGroups) {
+              if (r.price) break;
+              for (const el of document.querySelectorAll(group)) {
+                if (isStrikethrough(el)) continue;
+                const txt = el.textContent || "";
+                const m = txt.match(/[\$£€¥]\s*(\d[\d,]*(?:\.\d{1,2})?)/);
+                if (m) { r.price = parseFloat(m[1].replace(/,/g, "")); break; }
+              }
             }
           }
 
