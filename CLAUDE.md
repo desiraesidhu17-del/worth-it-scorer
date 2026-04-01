@@ -22,7 +22,7 @@ A clothing quality scoring Chrome extension + Flask backend.
 
 ### ✅ Working
 - Fabric extraction on Madewell, Aritzia, Free People, most retailers
-- Price extraction (4-level cascade: itemprop → Shopify data attrs → CSS class → broad DOM scan)
+- Price extraction (6-level cascade: JSON-LD offers.price → OG meta → itemprop → Shopify data attrs → CSS class → broad DOM scan)
 - All price selectors in `try/catch` so failures never break fabric reading
 - `extractor.py` has `_parse_price_raw()` handling CA$, £, €, AU$ etc.
 - 33/33 tests passing
@@ -45,7 +45,7 @@ A clothing quality scoring Chrome extension + Flask backend.
 - Add more metrics to result card (needs brainstorm + plan first)
 
 ### Known Issues
-- Claude in Chrome MCP not connected (workaround: DevTools console snippets)
+- Claude in Chrome MCP not connected (native host path was fixed in this session — needs Chrome restart to verify)
 - Low score + "fairly priced" verdict can feel contradictory (UX debt, not a bug)
 
 ---
@@ -104,3 +104,4 @@ pytest scoring/test_extractor.py   # should be 33 passed
 | 2026-03-30 | Fixed price bugs (CA$ parsing, itemprop selector, DOM scan crash), designed Cold Data redesign |
 | 2026-03-30 | Implemented Cold Data redesign (all 8 tasks): Space Mono, cream palette, flat score number, /SECTION headers, dotted stat rows, bracket UI, deployed to Railway |
 | 2026-03-31 | UX polish: verdict rewrite (decision-assistant tone), Price fit label, CPW context, construction unification, download button animation |
+| 2026-04-01 | Fixed price extraction on sale pages (Aritzia, Revolve). Root cause: DOM was picking up crossed-out original price. Fix: extension now reads JSON-LD offers.price first (Step 0) + OG meta (Step 0b) before any DOM scanning — JSON-LD always reflects the current selling price. Also added strikethrough detection to CSS class heuristic step, removed [class*='regular-price'] selector. Native messaging host path also fixed (AppTranslocation stale path → correct .local/share/claude path). |
