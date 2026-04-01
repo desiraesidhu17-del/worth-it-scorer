@@ -179,8 +179,9 @@ def extract_from_payload(payload: dict) -> ExtractionResult:
         result = _apply_validation(result)
         _select_main_composition(result)
 
-    # Override price/category from payload if provided
-    if payload.get("price"):
+    # Use payload price only as fallback — JSON-LD/meta prices take priority.
+    # DOM-scraped prices can pick up the original/crossed-out price on sale pages.
+    if payload.get("price") and not result.price:
         result.price = _parse_price_raw(payload["price"])
 
     if payload.get("category"):
