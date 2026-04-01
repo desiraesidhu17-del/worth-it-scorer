@@ -85,6 +85,36 @@ btn.addEventListener("click", async () => {
 
         // Price extraction — wrapped in try/catch so any failure is non-fatal
         try {
+          // 0. JSON-LD offers.price — most reliable source.
+          //    E-commerce sites set this for Google Shopping; it always reflects
+          //    the current selling price, never the crossed-out original.
+          for (const block of r.json_ld) {
+            if (r.price) break;
+            // Handle both direct blocks and @graph wrappers
+            const items = Array.isArray(block["@graph"]) ? block["@graph"] : [block];
+            for (const item of items) {
+              if (r.price) break;
+              let offers = item.offers;
+              if (!offers) continue;
+              if (Array.isArray(offers)) offers = offers[0];
+              if (!offers) continue;
+              const pRaw = offers.price ?? offers.lowPrice;
+              if (pRaw == null) continue;
+              const n = parseFloat(String(pRaw).replace(/[^0-9.]/g, ""));
+              if (!isNaN(n) && n > 0) r.price = n;
+            }
+          }
+
+          // 0b. Open Graph / product meta price — server-rendered, also reliable
+          if (!r.price) {
+            for (const k of ["og:price:amount", "product:price:amount"]) {
+              if (r.meta[k]) {
+                const n = parseFloat(String(r.meta[k]).replace(/[^0-9.]/g, ""));
+                if (!isNaN(n) && n > 0) { r.price = n; break; }
+              }
+            }
+          }
+
           // 1. Schema.org microdata: <* itemprop="price" content="128.00">
           //    or <* itemprop="price">CA$217.00</*> (text content only, no content attr)
           const itempropEl = document.querySelector("[itemprop='price']");

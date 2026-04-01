@@ -179,20 +179,9 @@ def extract_from_payload(payload: dict) -> ExtractionResult:
         result = _apply_validation(result)
         _select_main_composition(result)
 
-    # Price selection: use minimum across structured-data + DOM candidates.
-    # Sale prices are always ≤ regular prices, so min() picks the sale price
-    # regardless of which source has the regular vs. sale price.
-    # Sanity check: ignore DOM price if it differs from structured data by >10x
-    # (catches DOM scraping a wrong element like a shipping fee).
-    dom_price = _parse_price_raw(payload.get("price"))
-    if dom_price and dom_price > 0:
-        if result.price:
-            ratio = max(result.price, dom_price) / min(result.price, dom_price)
-            if ratio <= 10:
-                result.price = min(result.price, dom_price)
-            # else: structured-data price is kept (DOM value looks wrong)
-        else:
-            result.price = dom_price  # DOM is the only source
+    # Use payload price (extension already picks the right one via JSON-LD first)
+    if payload.get("price"):
+        result.price = _parse_price_raw(payload["price"])
 
     if payload.get("category"):
         result.category = payload["category"]
