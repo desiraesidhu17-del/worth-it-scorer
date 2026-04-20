@@ -333,7 +333,7 @@ HEADLINE_MATRIX: dict[tuple[str, str], tuple[str, str]] = {
 }
 
 # Step 2 override: premium fiber (silk, cashmere, alpaca, merino) at low/very_low score.
-# Swaps headline only — sub_line comes from the Step 1 matrix.
+# Replaces both headline and sub_line — the override provides its own specific sub.
 _PREMIUM_OVERRIDE_BANDS: frozenset[str] = frozenset({"very_low", "low"})
 _PREMIUM_OVERRIDE_HEADLINE = "Built for feel, not longevity"
 _PREMIUM_OVERRIDE_SUB = "Fine fibers like silk prioritize softness and drape over durability."

@@ -15,7 +15,7 @@ def test_headline_premium_override_low():
     silk = [{"canonical": "silk", "pct": 100}]
     headline, sub = get_headline(score=35.0, price_pressure_level="high", composition=silk)
     assert headline == "Built for feel, not longevity"
-    assert "softness" in sub.lower() or "drape" in sub.lower()
+    assert sub == "Fine fibers like silk prioritize softness and drape over durability."
 
 
 def test_headline_premium_override_very_low():
