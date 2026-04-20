@@ -35,8 +35,8 @@ WORTH_IT_VERDICTS: dict[tuple[str, str], str] = {
         "Short lifespan for the price."
     ),
     ("very_low", "premium"): (
-        "Premium branding, low durability. "
-        "Price does not reflect the likely wear experience."
+        "Premium fiber, very low predicted durability. "
+        "The fiber science does not support this price from a wear-resistance standpoint."
     ),
 
     # Low (26–45)
@@ -57,8 +57,8 @@ WORTH_IT_VERDICTS: dict[tuple[str, str], str] = {
         "Best for light, occasional wear."
     ),
     ("low", "premium"): (
-        "Premium fiber name, below-average blend ratio. "
-        "Predicted performance doesn't match the price."
+        "Lower predicted durability than the premium label suggests. "
+        "The score reflects wear resistance — softness, drape, and feel are not captured here."
     ),
 
     # Mid (46–65)
@@ -258,3 +258,125 @@ def get_cost_per_wash(price: float, score: float) -> dict:
             + (f"At ${price:.0f}, that is ${cost_low:.2f}–${cost_high:.2f} per wash." if price else "")
         ),
     }
+
+
+# ── Headline system ───────────────────────────────────────────────────────────
+# Three-step architecture:
+#   Step 1 (A): 2D matrix by (score_band, price_pressure_level) — consistency + control
+#   Step 2 (B-lite): premium fiber override at low/very_low — swaps headline only
+#   Step 3 (C): get_watch_for() below — controlled lookup, not generation
+
+HEADLINE_MATRIX: dict[tuple[str, str], tuple[str, str]] = {
+    # (score_band, price_pressure_level): (headline, sub_line)
+    # Language rules: use "durability" not "material/fiber"; real-world outcome subs;
+    # price criticism: "price runs ahead" not "doesn't justify".
+
+    # very_low (0–25)
+    ("very_low", "low"):      ("Weak durability, fair price",
+                               "Durability is low — the price at least reflects it."),
+    ("very_low", "moderate"): ("Weak durability, priced too high",
+                               "Likely to show wear early relative to the price."),
+    ("very_low", "high"):     ("Poor durability, high price",
+                               "Expect visible wear sooner than this price suggests."),
+    ("very_low", "extreme"):  ("Luxury price, budget fiber",
+                               "You're paying for positioning, not performance."),
+    ("very_low", "unknown"):  ("Very low durability",
+                               "Likely to show visible wear early in regular use."),
+
+    # low (26–45)
+    ("low", "low"):      ("Below-average durability, fair price",
+                          "Performance is below average — the price is honest about that."),
+    ("low", "moderate"): ("Below-average durability, priced too high",
+                          "Wear resistance doesn't match what the price suggests."),
+    ("low", "high"):     ("Overpriced for durability",
+                          "Wear resistance is below what this price suggests."),
+    ("low", "extreme"):  ("Luxury price, low durability",
+                          "You're paying for positioning, not how it holds up."),
+    ("low", "unknown"):  ("Below-average durability",
+                          "Expect earlier wear than most alternatives in this category."),
+
+    # mid (46–65)
+    ("mid", "low"):      ("Average durability, fair price",
+                          "Nothing exceptional — but the price is honest about that."),
+    ("mid", "moderate"): ("Average durability, slight premium",
+                          "Solid for the category — with a modest premium on top."),
+    ("mid", "high"):     ("Average durability, overpriced",
+                          "Performance is average — the price runs ahead of it."),
+    ("mid", "extreme"):  ("Average durability, luxury pricing",
+                          "Performance is typical — the price goes far beyond what it warrants."),
+    ("mid", "unknown"):  ("Average durability",
+                          "Should hold up fine under normal rotation."),
+
+    # good (66–80)
+    ("good", "low"):      ("Strong durability, fair price",
+                           "Performance backs up the price — this is what good value looks like."),
+    ("good", "moderate"): ("Strong durability, slight premium",
+                           "Good performance, with a modest brand premium on top."),
+    ("good", "high"):     ("Good durability, overpriced",
+                           "Performance is strong — but the price runs well ahead of it."),
+    ("good", "extreme"):  ("Good durability, steep premium",
+                           "Solid performance — but you're paying well beyond what it warrants."),
+    ("good", "unknown"):  ("Above-average durability",
+                           "Built to hold up over regular rotation."),
+
+    # excellent (81–100)
+    ("excellent", "low"):      ("Exceptional durability, great value",
+                                "Top-tier performance at a price that reflects how it holds up."),
+    ("excellent", "moderate"): ("Exceptional durability, modest premium",
+                                "Top-tier performance — the slight premium is the cost of this quality level."),
+    ("excellent", "high"):     ("Exceptional durability, steep price",
+                                "Top-tier performance — but the price runs well ahead of it."),
+    ("excellent", "extreme"):  ("Exceptional durability, extreme price",
+                                "Performance is exceptional — but the price goes far beyond what even that justifies."),
+    ("excellent", "unknown"):  ("Exceptional durability",
+                                "Built for longevity — top-tier performance across the board."),
+}
+
+# Step 2 override: premium fiber (silk, cashmere, alpaca, merino) at low/very_low score.
+# Swaps headline only — sub_line comes from the Step 1 matrix.
+_PREMIUM_OVERRIDE_BANDS: frozenset[str] = frozenset({"very_low", "low"})
+_PREMIUM_OVERRIDE_HEADLINE = "Built for feel, not longevity"
+_PREMIUM_OVERRIDE_SUB = "Fine fibers like silk prioritize softness and drape over durability."
+
+
+def get_headline(
+    score: float,
+    price_pressure_level: str,
+    composition: list[dict],
+) -> tuple[str, str]:
+    """
+    Returns (headline, headline_sub) for the result card.
+
+    Step 1 (A): 2D matrix keyed on (score_band, price_pressure_level).
+    Step 2 (B-lite): premium fiber at low/very_low overrides the headline.
+
+    composition: [{"canonical": str, "pct": float}] — known fibers only.
+    price_pressure_level: "low" | "moderate" | "high" | "extreme" | "unknown"
+    """
+    band = get_score_band(score)
+
+    # Step 2: B-lite override
+    if band in _PREMIUM_OVERRIDE_BANDS:
+        if get_dominant_fiber_class(composition) == "premium":
+            return _PREMIUM_OVERRIDE_HEADLINE, _PREMIUM_OVERRIDE_SUB
+
+    # Step 1: base matrix
+    key = (band, price_pressure_level)
+    if key in HEADLINE_MATRIX:
+        return HEADLINE_MATRIX[key]
+
+    # Fallback to unknown-price entry for the band
+    return HEADLINE_MATRIX.get((band, "unknown"), ("", ""))
+
+
+def get_watch_for(
+    composition: list[dict],
+    properties: dict,
+    price: float,
+    score_band: str,
+) -> list[str]:
+    """
+    Returns up to 3 watch-for strings for the result card.
+    Placeholder — full implementation is Task 2.
+    """
+    raise NotImplementedError("get_watch_for is not yet implemented")
