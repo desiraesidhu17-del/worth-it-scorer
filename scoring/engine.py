@@ -30,6 +30,8 @@ from .verdict_library import (
     get_cost_per_wash,
     get_score_band,
     CONFIDENCE_NOTES,
+    get_headline,
+    get_watch_for,
 )
 from .construction_rubric import ConstructionResult, score_from_price
 
@@ -75,6 +77,11 @@ class ScoreResult:
 
     # Construction sub-score (optional — populated when text or image is available)
     construction: Optional[ConstructionResult] = None
+
+    # Headline (three-step system — see verdict_library.get_headline / get_watch_for)
+    headline: str = ""
+    headline_sub: str = ""
+    watch_for: list[str] = field(default_factory=list)
 
     # Metadata
     methodology_version: str = METHODOLOGY_VERSION
@@ -199,6 +206,17 @@ def score_item(
     comp_dicts = [{"canonical": e.canonical, "pct": e.pct} for e in known_entries]
     verdict = get_verdict_sentence(worth_it_score, comp_dicts)
     band = get_score_band(worth_it_score)
+    headline, headline_sub = get_headline(
+        worth_it_score,
+        price_pressure["level"],
+        comp_dicts,
+    )
+    watch_for = get_watch_for(
+        comp_dicts,
+        {k: round(v, 1) for k, v in adjusted.items()},
+        price,
+        band,
+    )
 
     return ScoreResult(
         composition=entries,
@@ -216,6 +234,9 @@ def score_item(
         score_band=band,
         unknown_fibers=unknown_fibers,
         construction=construction,
+        headline=headline,
+        headline_sub=headline_sub,
+        watch_for=watch_for,
     )
 
 
@@ -321,4 +342,7 @@ def _no_data_result(
         verdict_sentence="No fiber composition data available — score cannot be calculated.",
         score_band="very_low",
         unknown_fibers=unknown_fibers,
+        headline="No composition data",
+        headline_sub="Score cannot be calculated without fiber composition information.",
+        watch_for=[],
     )
