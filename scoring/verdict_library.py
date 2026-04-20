@@ -369,14 +369,87 @@ def get_headline(
     return HEADLINE_MATRIX.get((band, "unknown"), ("", ""))
 
 
+# ── Watch For system (Step 3 — Approach C, controlled) ────────────────────────
+# Produces up to 3 specific, user-visible failure mode strings.
+# Layer 1: property-based generic fallback.
+# Layer 2: fiber-specific override replaces generic for that property slot.
+# Layer 3: price flag when high price + low durability band.
+
+# (property_name): (score_threshold, generic_watch_for_string)
+_WATCH_PROPERTY_GENERIC: dict[str, tuple[float, str]] = {
+    "pilling":       (50.0, "Surface pilling or fuzzing"),
+    "tensile":       (50.0, "Seam stress, distortion over time"),
+    "colorfastness": (65.0, "Color fading with repeated washing"),
+}
+
+# fiber_canonical: {property_name: (score_threshold, watch_for_string)}
+# When dominant fiber matches AND property score < threshold,
+# this string replaces the generic string for that property slot.
+_WATCH_FIBER_SPECIFIC: dict[str, dict[str, tuple[float, str]]] = {
+    "acrylic":  {"pilling":  (50.0, "Heavy pilling within 1–2 seasons")},
+    "silk":     {"pilling":  (55.0, "Snagging, delicate handling required"),
+                 "tensile":  (60.0, "Snagging, delicate handling required")},
+    "viscose":  {"tensile":  (50.0, "Shrinks or distorts when wet")},
+    "rayon":    {"tensile":  (50.0, "Shrinks or distorts when wet")},
+    "cashmere": {"pilling":  (35.0, "Visible pilling after early wears")},
+    "wool":     {"pilling":  (60.0, "Pilling under arms and at seams")},
+    "cotton":   {"colorfastness": (75.0, "Fading after repeated washing")},
+}
+
+_WATCH_PRICE_FLAG = "High care cost relative to expected lifespan"
+_WATCH_PRICE_FLAG_THRESHOLD = 100.0
+_WATCH_PRICE_FLAG_BANDS: frozenset[str] = frozenset({"very_low", "low"})
+
+
 def get_watch_for(
     composition: list[dict],
-    properties: dict,
-    price: float,
+    property_scores: dict,
+    price: float | None,
     score_band: str,
 ) -> list[str]:
     """
-    Returns up to 3 watch-for strings for the result card.
-    Placeholder — full implementation is Task 2.
+    Returns up to 3 user-visible failure modes for this composition.
+
+    composition: [{"canonical": str, "pct": float}] — known fibers only.
+    property_scores: {"pilling": float, "tensile": float, "colorfastness": float, "moisture": float}
+    price: retail price in USD, or None.
+    score_band: "very_low" | "low" | "mid" | "good" | "excellent"
     """
-    raise NotImplementedError("get_watch_for is not yet implemented")
+    # Dominant fiber = highest-percentage canonical fiber
+    dominant_fiber = ""
+    if composition:
+        dominant_fiber = max(composition, key=lambda f: f.get("pct", 0)).get("canonical", "")
+
+    fiber_overrides = _WATCH_FIBER_SPECIFIC.get(dominant_fiber, {})
+    results: list[str] = []
+    seen: set[str] = set()
+
+    for prop, (generic_threshold, generic_str) in _WATCH_PROPERTY_GENERIC.items():
+        score = property_scores.get(prop, 100.0)
+
+        # Layer 2: fiber-specific override for this property slot
+        if prop in fiber_overrides:
+            override_threshold, override_str = fiber_overrides[prop]
+            if score < override_threshold:
+                if override_str not in seen:
+                    seen.add(override_str)
+                    results.append(override_str)
+                continue  # Skip generic for this slot regardless
+
+        # Layer 1: generic fallback
+        if score < generic_threshold:
+            if generic_str not in seen:
+                seen.add(generic_str)
+                results.append(generic_str)
+
+    # Layer 3: price flag
+    if (
+        price is not None
+        and price > _WATCH_PRICE_FLAG_THRESHOLD
+        and score_band in _WATCH_PRICE_FLAG_BANDS
+        and _WATCH_PRICE_FLAG not in seen
+        and len(results) < 3
+    ):
+        results.append(_WATCH_PRICE_FLAG)
+
+    return results[:3]
