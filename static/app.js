@@ -156,17 +156,43 @@ function renderResult(r) {
   const pp = r.price_pressure || {};
   const cpw = r.cost_per_wash || {};
 
+  // Headline
+  document.getElementById("card-headline").textContent = r.headline || "";
+  document.getElementById("card-headline-sub").textContent = r.headline_sub || "";
+
+  // Watch for
+  const watchItems = r.watch_for || [];
+  const watchRow = document.getElementById("watch-for-row");
+  if (watchItems.length > 0) {
+    document.getElementById("watch-for-items").textContent = watchItems.join("  ·  ");
+    watchRow.hidden = false;
+  } else {
+    watchRow.hidden = true;
+  }
+
+  // Score line
   document.getElementById("score-number").textContent = score;
   document.getElementById("score-number").style.color = scoreColor(score);
 
-  document.getElementById("verdict-sentence").textContent = r.verdict_sentence || "";
+  const bandLabels = {
+    very_low:  "VERY LOW DURABILITY",
+    low:       "LOW DURABILITY",
+    mid:       "AVERAGE DURABILITY",
+    good:      "ABOVE AVERAGE DURABILITY",
+    excellent: "STRONG DURABILITY",
+  };
+  document.getElementById("score-band-label").textContent = bandLabels[r.score_band] || "";
 
+  // Confidence
   const conf = r.confidence || "low";
   const confLabel = document.getElementById("confidence-label");
   confLabel.textContent = `[${conf.toUpperCase()} CONFIDENCE]`;
   confLabel.style.color = conf === "high" ? "var(--green)" : conf === "medium" ? "var(--yellow)" : "var(--red)";
   const notes = r.confidence_notes || [];
   document.getElementById("confidence-note").textContent = notes[notes.length - 1] || "";
+
+  // Verdict sentence (tertiary)
+  document.getElementById("verdict-sentence").textContent = r.verdict_sentence || "";
 
   document.getElementById("stat-material").textContent = `${material} / 100`;
   document.getElementById("stat-material").style.color = scoreColor(material);
@@ -201,14 +227,36 @@ function renderResult(r) {
 
 function renderConstruction(c) {
   const row = document.getElementById("construction-row");
+  const notAssessed = document.getElementById("construction-not-assessed");
   const constrHeader = document.querySelector(".section-header-construction");
+
   if (!c) {
     row.hidden = true;
+    notAssessed.hidden = true;
     if (constrHeader) constrHeader.hidden = true;
     return;
   }
-  row.hidden = false;
+
   if (constrHeader) constrHeader.hidden = false;
+
+  // Hide numeric score when only price-floor inference — no real signals
+  const isPriceFloorOnly =
+    c.source === "price_floor" && (!c.signals_found || c.signals_found.length === 0);
+
+  if (isPriceFloorOnly) {
+    row.hidden = true;
+    notAssessed.hidden = false;
+    const noteEl = document.getElementById("construction-floor-note-na");
+    if (noteEl && c.price_floor_note) {
+      noteEl.textContent = c.price_floor_note;
+      noteEl.hidden = false;
+    }
+    return;
+  }
+
+  // Real signals found — show full construction row
+  row.hidden = false;
+  notAssessed.hidden = true;
 
   const scoreVal = c.score || 0;
   const scoreEl = document.getElementById("construction-score");
@@ -312,6 +360,14 @@ document.getElementById("btn-reset").addEventListener("click", () => {
   document.getElementById("category-manual").value = "other";
   document.getElementById("score-number").textContent = "—";
   document.getElementById("score-number").style.color = "";
+  document.getElementById("card-headline").textContent = "";
+  document.getElementById("card-headline-sub").textContent = "";
+  document.getElementById("watch-for-items").textContent = "";
+  document.getElementById("watch-for-row").hidden = true;
+  document.getElementById("score-number").textContent = "—";
+  document.getElementById("score-number").style.color = "";
+  document.getElementById("score-band-label").textContent = "";
+  document.getElementById("construction-not-assessed").hidden = true;
 });
 
 /* ── UI helpers ──────────────────────────────────────────────────────────── */
