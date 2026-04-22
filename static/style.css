@@ -415,6 +415,64 @@ select { appearance: none; cursor: pointer; }
   font-style: italic;
 }
 
+/* ── Technical override panel ────────────────────────────────────────────── */
+.technical-override {
+  padding: 14px 24px 18px;
+  border-top: 1px solid var(--border);
+}
+
+.technical-override-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.technical-override-sub {
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.technical-override-heading {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.technical-signals-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 10px;
+}
+
+.technical-signals-list li::before {
+  content: "[ ";
+  color: var(--muted);
+}
+
+.technical-signals-list li::after {
+  content: " ]";
+  color: var(--muted);
+}
+
+.technical-signals-list li {
+  font-size: 0.75rem;
+  line-height: 1.8;
+  color: var(--text);
+}
+
+.technical-override-note {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-style: italic;
+  line-height: 1.5;
+}
+
 /* Stats row */
 .stats-row {
   display: flex;

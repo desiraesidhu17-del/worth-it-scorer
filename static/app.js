@@ -214,8 +214,24 @@ function renderResult(r) {
   }
 
   const pd = document.getElementById("price-detail");
-  if (pp.detail) { pd.textContent = pp.detail; pd.hidden = false; }
-  else { pd.hidden = true; }
+  const techOverrideEl = document.getElementById("technical-override");
+  const techSignalsList = document.getElementById("technical-signals-list");
+
+  if (r.technical_override && r.technical_override.length > 0) {
+    // Hide normal price detail; show technical override panel
+    pd.hidden = true;
+    techSignalsList.innerHTML = "";
+    r.technical_override.forEach(sig => {
+      const li = document.createElement("li");
+      li.textContent = sig;
+      techSignalsList.appendChild(li);
+    });
+    techOverrideEl.hidden = false;
+  } else {
+    techOverrideEl.hidden = true;
+    if (pp.detail) { pd.textContent = pp.detail; pd.hidden = false; }
+    else { pd.hidden = true; }
+  }
 
   setBar("pilling",      props.pilling);
   setBar("tensile",      props.tensile);
@@ -368,6 +384,8 @@ document.getElementById("btn-reset").addEventListener("click", () => {
   document.getElementById("score-number").style.color = "";
   document.getElementById("score-band-label").textContent = "";
   document.getElementById("construction-not-assessed").hidden = true;
+  document.getElementById("technical-override").hidden = true;
+  document.getElementById("technical-signals-list").innerHTML = "";
 });
 
 /* ── UI helpers ──────────────────────────────────────────────────────────── */

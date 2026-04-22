@@ -597,6 +597,13 @@ def score_page_endpoint():
         result_dict = score_result.to_dict()
         result_dict.update(result_extraction.to_dict())
 
+        # Technical signal detection (extension path only — candidate_blocks present)
+        if candidate_text:
+            from scoring.technical_signals import detect_technical_signals
+            tech = detect_technical_signals(candidate_text)
+            if tech["is_technical"]:
+                result_dict["technical_override"] = tech["signals_found"]
+
         # Store with TTL
         result_id = str(_uuid_module.uuid4())
         _result_store[result_id] = {
