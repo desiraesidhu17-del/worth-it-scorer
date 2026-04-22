@@ -113,12 +113,14 @@ def test_watch_for_max_three():
     assert len(result) <= 3
 
 
-def test_watch_for_empty_when_all_high():
-    """No watch-fors when all property scores are strong."""
+def test_watch_for_polyester_moisture_flag():
+    """Polyester moisture (20) is below threshold (30) — always gets heat/breathability flag."""
     comp = [{"canonical": "polyester", "pct": 100}]
     props = {"pilling": 85, "tensile": 90, "colorfastness": 80, "moisture": 20}
     result = get_watch_for(comp, props, price=50.0, score_band="good")
-    assert result == []
+    assert "Traps heat, low breathability" in result
+    # All other properties are strong — only moisture flag fires
+    assert len(result) == 1
 
 
 def test_watch_for_no_price_flag_at_mid_band():

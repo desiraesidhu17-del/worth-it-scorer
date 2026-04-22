@@ -380,6 +380,7 @@ _WATCH_PROPERTY_GENERIC: dict[str, tuple[float, str]] = {
     "pilling":       (50.0, "Surface pilling or fuzzing"),
     "tensile":       (50.0, "Seam stress, distortion over time"),
     "colorfastness": (65.0, "Color fading with repeated washing"),
+    "moisture":      (30.0, "Traps heat, low breathability"),
 }
 
 # fiber_canonical: {property_name: (score_threshold, watch_for_string)}

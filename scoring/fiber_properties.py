@@ -51,7 +51,7 @@ FIBER_PROPERTIES = {
 
     # ── Natural plant fibers ──────────────────────────────────────────────────
     "cotton": {
-        "pilling":   45,  # Moderate pilling; lower-weight cotton pills more
+        "pilling":   50,  # Moderate pilling; cotton pills gradually (soft, not hard pills)
         "tensile":   60,
         "colorfastness": 75,  # Good with reactive dyes; fades faster than poly
         "moisture":  90,  # Excellent absorbency
@@ -171,10 +171,10 @@ CATEGORY_WEIGHTS = {
         "moisture": 0.10,
     },
     "t-shirt": {
-        "pilling": 0.30,
-        "tensile": 0.35,
-        "colorfastness": 0.20,
-        "moisture": 0.15,
+        "pilling": 0.25,
+        "tensile": 0.25,   # tensile matters less in a casual tee
+        "colorfastness": 0.22,
+        "moisture": 0.28,  # breathability is core to t-shirt quality
     },
     "dress": {
         "pilling": 0.30,
