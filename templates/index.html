@@ -145,19 +145,26 @@
       <div id="card-inner">
 
         <div class="card-top">
-          <div class="score-block">
-            <span id="score-number" class="score-number">—</span>
-            <div class="score-rule"></div>
-            <span class="score-denom">/ 100</span>
+          <p id="card-headline" class="card-headline"></p>
+          <p id="card-headline-sub" class="card-headline-sub"></p>
+
+          <div id="watch-for-row" class="watch-for-row" hidden>
+            <span class="watch-for-label">Watch for:</span>
+            <span id="watch-for-items"></span>
           </div>
 
-          <div class="card-top-right">
-            <p id="verdict-sentence" class="verdict-sentence"></p>
-            <div class="confidence-badge">
-              <span id="confidence-label"></span>
-              <span id="confidence-note" class="confidence-note"></span>
-            </div>
+          <div class="score-line">
+            <span id="score-number" class="score-number">—</span>
+            <span class="score-sep"> / 100  ·  </span>
+            <span id="score-band-label" class="score-band-label"></span>
           </div>
+
+          <div class="confidence-badge">
+            <span id="confidence-label"></span>
+            <span id="confidence-note" class="confidence-note"></span>
+          </div>
+
+          <p id="verdict-sentence" class="verdict-sentence"></p>
         </div>
 
         <div class="section-header">/MATERIAL ANALYSIS</div>
@@ -171,7 +178,7 @@
             <span id="stat-pressure" class="stat-value">—</span>
           </div>
           <div class="stat">
-            <span class="stat-label">Cost per wash</span>
+            <span class="stat-label">Est. cost per wear</span>
             <span id="stat-cpw" class="stat-value">—</span>
           </div>
         </div>
@@ -181,6 +188,7 @@
         <div id="price-detail" class="price-detail"></div>
 
         <div class="section-header">/PROPERTIES</div>
+        <p class="properties-attribution">Fiber class averages — ASTM D4970/D5034</p>
         <div class="property-bars">
           <div class="prop-row"><span>Pilling resistance</span><div class="bar-track"><div class="bar" id="bar-pilling"></div></div><span id="val-pilling" class="prop-val"></span></div>
           <div class="prop-row"><span>Tensile strength</span><div class="bar-track"><div class="bar" id="bar-tensile"></div></div><span id="val-tensile" class="prop-val"></span></div>
@@ -190,6 +198,10 @@
 
         <div class="section-header section-header-construction">/CONSTRUCTION</div>
         <!-- Construction score -->
+        <div id="construction-not-assessed" class="construction-not-assessed" hidden>
+          <span class="construction-na-label">Construction not assessed</span>
+          <p id="construction-floor-note-na" class="construction-floor-note"></p>
+        </div>
         <div id="construction-row" class="construction-row" hidden>
           <div class="prop-row">
             <span>Construction</span>
