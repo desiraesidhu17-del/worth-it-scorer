@@ -277,8 +277,8 @@ select { appearance: none; cursor: pointer; }
 /* Score + verdict row */
 .card-top {
   display: flex;
-  gap: 24px;
-  align-items: center;
+  flex-direction: column;
+  gap: 0;
   padding: 28px 24px;
   border-bottom: 1px solid var(--border);
 }
@@ -292,7 +292,7 @@ select { appearance: none; cursor: pointer; }
 }
 
 .score-number {
-  font-size: 4rem;
+  font-size: 1.6rem;
   font-weight: 700;
   line-height: 1;
   color: var(--score);
@@ -315,9 +315,11 @@ select { appearance: none; cursor: pointer; }
 .card-top-right { flex: 1; }
 
 .verdict-sentence {
-  font-size: 1rem;
+  font-size: 0.8rem;
+  color: var(--muted);
   line-height: 1.5;
-  margin-bottom: 6px;
+  margin-top: 10px;
+  margin-bottom: 0;
 }
 
 .confidence-badge {
@@ -337,6 +339,80 @@ select { appearance: none; cursor: pointer; }
   font-size: 0.8rem;
   color: var(--muted);
   line-height: 1.4;
+}
+
+/* ── Headline system ─────────────────────────────────────────────────────── */
+.card-headline {
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.card-headline-sub {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.watch-for-row {
+  margin-bottom: 14px;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.watch-for-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-weight: 700;
+  margin-right: 4px;
+}
+
+.score-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+  margin-bottom: 10px;
+}
+
+.score-sep {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.score-band-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+/* ── Property bars attribution ────────────────────────────────────────────── */
+.properties-attribution {
+  padding: 4px 24px 10px;
+  font-size: 0.65rem;
+  color: var(--muted);
+  font-style: italic;
+  letter-spacing: 0.02em;
+}
+
+/* ── Construction not assessed ───────────────────────────────────────────── */
+.construction-not-assessed {
+  padding: 12px 24px;
+  border-top: 1px solid var(--border);
+}
+
+.construction-na-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-style: italic;
 }
 
 /* Stats row */
