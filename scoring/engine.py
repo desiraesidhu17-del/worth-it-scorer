@@ -83,6 +83,11 @@ class ScoreResult:
     headline_sub: str = ""
     watch_for: list[str] = field(default_factory=list)
 
+    # GSM (fabric weight) modifier
+    gsm: Optional[float] = None             # GSM value passed in
+    gsm_modifier: int = 0                   # -10 / -5 / 0 / +6 / +10
+    gsm_modifier_applied: bool = False      # True if conditions were met
+
     # Metadata
     methodology_version: str = METHODOLOGY_VERSION
     unknown_fibers: list[str] = field(default_factory=list)
@@ -114,6 +119,7 @@ def score_item(
     price: Optional[float] = None,
     category: str = "other",
     construction: Optional[ConstructionResult] = None,
+    gsm: Optional[float] = None,
 ) -> ScoreResult:
     """
     Score a garment from its fiber composition, retail price, and category.
@@ -177,6 +183,13 @@ def score_item(
     material_score = sum(adjusted[prop] * weights[prop] for prop in weights)
     material_score = round(max(0.0, min(100.0, material_score)), 1)
 
+    # ── 4.5. Score adjustments (combined in Task 3 — computed here) ─────────
+    gsm_mod, gsm_mod_applied = _gsm_modifier_for_score(gsm, known_entries, category)
+    # NOTE: gsm_mod is applied to material_score in Task 3 alongside dominance/category adjustments
+    # For now just store it so the tests can verify the function works
+    combined_adj = gsm_mod  # Task 3 will add dominance_adj + category_adj and cap at ±15
+    material_score = round(max(0.0, min(100.0, material_score + combined_adj)), 1)
+
     # ── 5. Confidence assessment ─────────────────────────────────────────────
     confidence, confidence_notes = _assess_confidence(
         entries=entries,
@@ -237,10 +250,46 @@ def score_item(
         headline=headline,
         headline_sub=headline_sub,
         watch_for=watch_for,
+        gsm=gsm,
+        gsm_modifier=gsm_mod,
+        gsm_modifier_applied=gsm_mod_applied,
     )
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
+
+def _gsm_modifier_for_score(
+    gsm: Optional[float],
+    known_entries: list[FiberEntry],
+    category: str,
+) -> tuple[int, bool]:
+    """
+    Returns (modifier, applied).
+    Conditions: GSM provided, cotton or linen > 50% of composition, category is t-shirt or dress.
+    modifier values: below 140 → -10, 140–179 → -5, 180–239 → 0, 240–299 → +6, 300+ → +10.
+    applied is True when all conditions are met, even if modifier is 0 (baseline range).
+    """
+    if gsm is None:
+        return 0, False
+    if category not in ("t-shirt", "dress"):
+        return 0, False
+
+    natural_cellulose = {"cotton", "linen"}
+    dominant = any(e.canonical in natural_cellulose and e.pct > 50 for e in known_entries)
+    if not dominant:
+        return 0, False
+
+    if gsm < 140:
+        return -10, True
+    elif gsm < 180:
+        return -5, True
+    elif gsm < 240:
+        return 0, True
+    elif gsm < 300:
+        return 6, True
+    else:
+        return 10, True
+
 
 def _normalise_category(category: str) -> str:
     cat = category.lower().strip()

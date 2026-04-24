@@ -264,6 +264,81 @@ def test_category_normalisation():
     )
 
 
+def test_gsm_modifier_fields_exist():
+    """ScoreResult always exposes gsm, gsm_modifier, gsm_modifier_applied."""
+    result = score_item(
+        composition=[{"fiber": "cotton", "pct": 100}],
+        price=30.0,
+        category="t-shirt",
+    )
+    assert hasattr(result, "gsm_modifier_applied")
+    assert hasattr(result, "gsm_modifier")
+    assert hasattr(result, "gsm")
+    assert result.gsm_modifier_applied is False  # no GSM provided
+    assert result.gsm_modifier == 0
+    assert result.gsm is None
+
+
+def test_gsm_modifier_below_140():
+    """120gsm cotton t-shirt gets -10 vs 200gsm baseline."""
+    lightweight = score_item(
+        composition=[{"fiber": "cotton", "pct": 100}],
+        price=30.0,
+        category="t-shirt",
+        gsm=120.0,
+    )
+    baseline = score_item(
+        composition=[{"fiber": "cotton", "pct": 100}],
+        price=30.0,
+        category="t-shirt",
+        gsm=200.0,
+    )
+    assert lightweight.gsm_modifier_applied is True
+    assert lightweight.gsm_modifier == -10
+    assert abs(lightweight.material_score - (baseline.material_score - 10)) < 0.1
+
+
+def test_gsm_modifier_above_240():
+    """270gsm cotton t-shirt gets +6 vs 200gsm baseline."""
+    heavy = score_item(
+        composition=[{"fiber": "cotton", "pct": 100}],
+        price=30.0,
+        category="t-shirt",
+        gsm=270.0,
+    )
+    baseline = score_item(
+        composition=[{"fiber": "cotton", "pct": 100}],
+        price=30.0,
+        category="t-shirt",
+        gsm=200.0,
+    )
+    assert heavy.gsm_modifier == 6
+    assert abs(heavy.material_score - (baseline.material_score + 6)) < 0.1
+
+
+def test_gsm_modifier_not_applied_wrong_fiber():
+    """GSM modifier does not fire for polyester (only cotton/linen > 50%)."""
+    result = score_item(
+        composition=[{"fiber": "polyester", "pct": 100}],
+        price=40.0,
+        category="t-shirt",
+        gsm=120.0,
+    )
+    assert result.gsm_modifier_applied is False
+    assert result.gsm_modifier == 0
+
+
+def test_gsm_modifier_not_applied_wrong_category():
+    """GSM modifier does not fire for sweater category."""
+    result = score_item(
+        composition=[{"fiber": "cotton", "pct": 100}],
+        price=60.0,
+        category="sweater",
+        gsm=120.0,
+    )
+    assert result.gsm_modifier_applied is False
+
+
 # ── Runner ────────────────────────────────────────────────────────────────────
 
 def run_all():
@@ -280,6 +355,11 @@ def run_all():
         ("Alias resolution (spandex/elastane)",  test_alias_resolution),
         ("Cost-per-wash calculation",            test_cost_per_wash_calculation),
         ("Category normalisation (cardigan)",    test_category_normalisation),
+        ("GSM fields always exist on result",    test_gsm_modifier_fields_exist),
+        ("GSM modifier -10 below 140gsm",        test_gsm_modifier_below_140),
+        ("GSM modifier +6 above 240gsm",         test_gsm_modifier_above_240),
+        ("GSM modifier skips non-cotton fiber",  test_gsm_modifier_not_applied_wrong_fiber),
+        ("GSM modifier skips sweater category",  test_gsm_modifier_not_applied_wrong_category),
     ]
 
     print("\nScoring Engine Tests\n" + "─" * 40)
