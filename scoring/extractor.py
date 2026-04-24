@@ -205,7 +205,7 @@ def extract_from_payload(payload: dict) -> ExtractionResult:
     # Step 4: GPT fallback handled by caller (needs openai_client)
 
     # Extract GSM from candidate text if not already found
-    if not result.gsm:
+    if result.gsm is None:
         all_candidate = " ".join(payload.get("candidate_blocks") or [])
         result.gsm = _extract_gsm(all_candidate)
 

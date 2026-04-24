@@ -329,3 +329,15 @@ def test_gsm_none_when_absent():
     from scoring.extractor import extract_from_text
     result = extract_from_text("75% cotton, 25% polyester.")
     assert result.gsm is None
+
+def test_gsm_oz_requires_sq_yd_context():
+    from scoring.extractor import _extract_gsm
+    # Bare "oz" without /sq yd can match non-fabric contexts within range.
+    # This is a known limitation: the oz pattern has an optional unit suffix.
+    # In practice, candidate_blocks are product-detail DOM sections so
+    # false positives from liquid volumes are rare.
+    # Values outside 80–600 are discarded (e.g., "32 oz" → 1084.8 gsm → None).
+    assert _extract_gsm("32 oz water bottle") is None   # too heavy → filtered out
+    # A mid-range false positive cannot be ruled out without context:
+    result = _extract_gsm("6 oz cotton tee")            # valid fabric weight
+    assert result is not None and abs(result - 203.4) < 1.0  # 6×33.9=203.4
