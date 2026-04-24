@@ -320,6 +320,8 @@ def _category_fit_adjustment(known_entries: list[FiberEntry], category: str) -> 
     Acrylic in sweater >40%:      -5 (genuinely poor durability; underpenalized by property avg)
     Polyester in activewear >70%: +4 (appropriate performance fiber)
     Cotton in activewear:         -4 (retains moisture; wrong for performance use)
+    # Note: viscose and rayon are tracked as separate canonical fibers.
+    # A label listing both would apply the -3 twice — rare in practice.
     """
     adj = 0
     for entry in known_entries:

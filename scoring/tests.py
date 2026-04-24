@@ -412,8 +412,16 @@ def test_viscose_dress_category_penalty():
 
 def test_fiber_dominance_four_fiber_penalty():
     """
-    Composition with 4+ fibers gets -2. Score is in valid range.
+    Single-fiber (90%+) gets +2 dominance; 4-fiber blend gets -2.
+    Using t-shirt avoids confounding with viscose-in-dress penalty.
+    Net spread is 4 points from dominance alone.
     """
+    single_fiber = score_item(
+        composition=[{"fiber": "cotton", "pct": 100}],
+        price=80.0,
+        category="t-shirt",
+        gsm=200.0,  # baseline GSM: 0 modifier, no confidence penalty
+    )
     four_fiber = score_item(
         composition=[
             {"fiber": "cotton", "pct": 40},
@@ -422,9 +430,13 @@ def test_fiber_dominance_four_fiber_penalty():
             {"fiber": "elastane", "pct": 10},
         ],
         price=80.0,
-        category="dress",
+        category="t-shirt",
     )
-    assert 0 < four_fiber.material_score < 100
+    # single fiber: +2 dominance; 4-fiber: -2 dominance — directional check
+    assert single_fiber.material_score > four_fiber.material_score, (
+        f"Single fiber should outscore 4-fiber blend: "
+        f"{single_fiber.material_score} vs {four_fiber.material_score}"
+    )
     assert four_fiber.gsm_modifier_applied is False
 
 
