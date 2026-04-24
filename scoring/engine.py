@@ -183,11 +183,11 @@ def score_item(
     material_score = sum(adjusted[prop] * weights[prop] for prop in weights)
     material_score = round(max(0.0, min(100.0, material_score)), 1)
 
-    # ── 4.5. Score adjustments (combined in Task 3 — computed here) ─────────
+    # ── 4.5. Score adjustments (GSM modifier; Task 3 replaces this block) ───
     gsm_mod, gsm_mod_applied = _gsm_modifier_for_score(gsm, known_entries, category)
-    # NOTE: gsm_mod is applied to material_score in Task 3 alongside dominance/category adjustments
-    # For now just store it so the tests can verify the function works
-    combined_adj = gsm_mod  # Task 3 will add dominance_adj + category_adj and cap at ±15
+    # Task 3 will replace `combined_adj = gsm_mod` with the full combined formula:
+    #   combined_adj = max(-15, min(15, gsm_mod + dominance_adj + category_adj))
+    combined_adj = gsm_mod
     material_score = round(max(0.0, min(100.0, material_score + combined_adj)), 1)
 
     # ── 5. Confidence assessment ─────────────────────────────────────────────

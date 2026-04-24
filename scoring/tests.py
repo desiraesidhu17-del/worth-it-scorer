@@ -339,6 +339,18 @@ def test_gsm_modifier_not_applied_wrong_category():
     assert result.gsm_modifier_applied is False
 
 
+def test_gsm_modifier_applied_true_at_baseline():
+    """applied=True even when modifier is 0 (180–239gsm baseline range)."""
+    result = score_item(
+        composition=[{"fiber": "cotton", "pct": 100}],
+        price=30.0,
+        category="t-shirt",
+        gsm=200.0,
+    )
+    assert result.gsm_modifier_applied is True
+    assert result.gsm_modifier == 0
+
+
 # ── Runner ────────────────────────────────────────────────────────────────────
 
 def run_all():
@@ -360,6 +372,7 @@ def run_all():
         ("GSM modifier +6 above 240gsm",         test_gsm_modifier_above_240),
         ("GSM modifier skips non-cotton fiber",  test_gsm_modifier_not_applied_wrong_fiber),
         ("GSM modifier skips sweater category",  test_gsm_modifier_not_applied_wrong_category),
+        ("GSM modifier applied=True at baseline 200gsm", test_gsm_modifier_applied_true_at_baseline),
     ]
 
     print("\nScoring Engine Tests\n" + "─" * 40)
