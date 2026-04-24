@@ -183,11 +183,11 @@ def score_item(
     material_score = sum(adjusted[prop] * weights[prop] for prop in weights)
     material_score = round(max(0.0, min(100.0, material_score)), 1)
 
-    # ── 4.5. Score adjustments (GSM modifier; Task 3 replaces this block) ───
+    # ── 4.5. Combined score adjustments (GSM + dominance + category fit, cap ±15) ──
     gsm_mod, gsm_mod_applied = _gsm_modifier_for_score(gsm, known_entries, category)
-    # Task 3 will replace `combined_adj = gsm_mod` with the full combined formula:
-    #   combined_adj = max(-15, min(15, gsm_mod + dominance_adj + category_adj))
-    combined_adj = gsm_mod
+    dominance_adj = _fiber_dominance_adjustment(known_entries)
+    category_adj = _category_fit_adjustment(known_entries, category)
+    combined_adj = max(-15, min(15, gsm_mod + dominance_adj + category_adj))
     material_score = round(max(0.0, min(100.0, material_score + combined_adj)), 1)
 
     # ── 5. Confidence assessment ─────────────────────────────────────────────
@@ -289,6 +289,59 @@ def _gsm_modifier_for_score(
         return 6, True
     else:
         return 10, True
+
+
+def _fiber_dominance_adjustment(known_entries: list[FiberEntry]) -> int:
+    """
+    +2 if one fiber makes up 90%+ of total known composition.
+    -2 if 4 or more distinct fibers (complex blend; more variance).
+    0 otherwise.
+    """
+    if not known_entries:
+        return 0
+    known_total = sum(e.pct for e in known_entries)
+    if known_total == 0:
+        return 0
+    for entry in known_entries:
+        if (entry.pct / known_total) * 100 >= 90:
+            return 2
+    if len(known_entries) >= 4:
+        return -2
+    return 0
+
+
+def _category_fit_adjustment(known_entries: list[FiberEntry], category: str) -> int:
+    """
+    Flat adjustments for fiber/category combinations with strong quality implications.
+    Additive — multiple adjustments can stack.
+
+    Viscose/rayon in dress:       -3 (known structure loss and shrinkage)
+    Linen in t-shirt or dress:    +3 (strong, breathable; good fit for category)
+    Acrylic in sweater >40%:      -5 (genuinely poor durability; underpenalized by property avg)
+    Polyester in activewear >70%: +4 (appropriate performance fiber)
+    Cotton in activewear:         -4 (retains moisture; wrong for performance use)
+    """
+    adj = 0
+    for entry in known_entries:
+        fiber = entry.canonical
+        pct = entry.pct
+
+        if fiber in ("viscose", "rayon") and category == "dress":
+            adj -= 3
+
+        if fiber == "linen" and category in ("t-shirt", "dress"):
+            adj += 3
+
+        if fiber == "acrylic" and category == "sweater" and pct > 40:
+            adj -= 5
+
+        if fiber == "polyester" and category == "activewear" and pct > 70:
+            adj += 4
+
+        if fiber == "cotton" and category == "activewear":
+            adj -= 4
+
+    return adj
 
 
 def _normalise_category(category: str) -> str:

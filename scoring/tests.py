@@ -351,6 +351,83 @@ def test_gsm_modifier_applied_true_at_baseline():
     assert result.gsm_modifier == 0
 
 
+def test_acrylic_sweater_category_penalty():
+    """
+    Acrylic above 40% in sweater gets -5 category fit penalty.
+    60% acrylic sweater should score lower than 30% acrylic sweater.
+    """
+    high_acrylic = score_item(
+        composition=[{"fiber": "acrylic", "pct": 60}, {"fiber": "polyester", "pct": 40}],
+        price=80.0,
+        category="sweater",
+    )
+    low_acrylic = score_item(
+        composition=[{"fiber": "acrylic", "pct": 30}, {"fiber": "polyester", "pct": 70}],
+        price=80.0,
+        category="sweater",
+    )
+    assert high_acrylic.material_score < low_acrylic.material_score, (
+        f"High acrylic sweater should score lower: {high_acrylic.material_score} vs {low_acrylic.material_score}"
+    )
+
+
+def test_cotton_activewear_penalty():
+    """
+    Cotton in activewear gets -4. 100% polyester activewear (>70%) gets +4.
+    """
+    poly_active = score_item(
+        composition=[{"fiber": "polyester", "pct": 100}],
+        price=50.0,
+        category="activewear",
+    )
+    cotton_active = score_item(
+        composition=[{"fiber": "cotton", "pct": 100}],
+        price=50.0,
+        category="activewear",
+    )
+    assert poly_active.material_score > cotton_active.material_score, (
+        f"Polyester activewear should outscore cotton: {poly_active.material_score} vs {cotton_active.material_score}"
+    )
+
+
+def test_viscose_dress_category_penalty():
+    """
+    100% viscose in dress gets -3 category fit.
+    Lyocell in dress has no penalty, so should score higher.
+    """
+    viscose = score_item(
+        composition=[{"fiber": "viscose", "pct": 100}],
+        price=100.0,
+        category="dress",
+    )
+    lyocell = score_item(
+        composition=[{"fiber": "lyocell", "pct": 100}],
+        price=100.0,
+        category="dress",
+    )
+    assert lyocell.material_score > viscose.material_score, (
+        f"Lyocell dress should outscore viscose dress: {lyocell.material_score} vs {viscose.material_score}"
+    )
+
+
+def test_fiber_dominance_four_fiber_penalty():
+    """
+    Composition with 4+ fibers gets -2. Score is in valid range.
+    """
+    four_fiber = score_item(
+        composition=[
+            {"fiber": "cotton", "pct": 40},
+            {"fiber": "polyester", "pct": 30},
+            {"fiber": "viscose", "pct": 20},
+            {"fiber": "elastane", "pct": 10},
+        ],
+        price=80.0,
+        category="dress",
+    )
+    assert 0 < four_fiber.material_score < 100
+    assert four_fiber.gsm_modifier_applied is False
+
+
 # ── Runner ────────────────────────────────────────────────────────────────────
 
 def run_all():
@@ -373,6 +450,10 @@ def run_all():
         ("GSM modifier skips non-cotton fiber",  test_gsm_modifier_not_applied_wrong_fiber),
         ("GSM modifier skips sweater category",  test_gsm_modifier_not_applied_wrong_category),
         ("GSM modifier applied=True at baseline 200gsm", test_gsm_modifier_applied_true_at_baseline),
+        ("Acrylic >40% sweater category penalty",     test_acrylic_sweater_category_penalty),
+        ("Cotton in activewear penalised",            test_cotton_activewear_penalty),
+        ("Viscose in dress penalised",                test_viscose_dress_category_penalty),
+        ("4-fiber blend no dominance bonus",          test_fiber_dominance_four_fiber_penalty),
     ]
 
     print("\nScoring Engine Tests\n" + "─" * 40)
