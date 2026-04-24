@@ -74,6 +74,33 @@ _DETAIL_LABELS = frozenset([
 # ~255 chars before the actual fiber percentages in the same candidate block.
 _CONTEXT_WINDOW = 300
 
+# ── GSM extraction patterns ────────────────────────────────────────────────────
+_GSM_RE = re.compile(r"\b(\d{2,4})\s*gsm\b", re.IGNORECASE)
+_OZ_RE = re.compile(r"\b(\d+(?:\.\d+)?)\s*oz(?:/sq\s*yd|/yd)?\b", re.IGNORECASE)
+_OZ_TO_GSM = 33.9
+_GSM_MIN, _GSM_MAX = 80, 600
+
+
+def _extract_gsm(text: str) -> Optional[float]:
+    """
+    Extract fabric weight in GSM from text.
+    Handles: "200gsm", "180 GSM", "6 oz/sq yd" (converted via ×33.9).
+    Returns None if no value found or value outside plausible range (80–600).
+    """
+    m = _GSM_RE.search(text)
+    if m:
+        val = float(m.group(1))
+        if _GSM_MIN <= val <= _GSM_MAX:
+            return val
+
+    m = _OZ_RE.search(text)
+    if m:
+        val = float(m.group(1)) * _OZ_TO_GSM
+        if _GSM_MIN <= val <= _GSM_MAX:
+            return val
+
+    return None
+
 
 @dataclass
 class CompositionBlock:
@@ -98,6 +125,7 @@ class ExtractionResult:
     brand: Optional[str] = None
     product_name: Optional[str] = None
     category: Optional[str] = None
+    gsm: Optional[float] = None
 
     # Confidence
     extraction_method: str = "none"   # json_ld | regex | gpt | none
@@ -121,6 +149,7 @@ class ExtractionResult:
             "extraction_method": self.extraction_method,
             "extraction_confidence": self.extraction_confidence,
             "warnings": self.warnings,
+            "gsm": self.gsm,
         }
 
 
@@ -129,6 +158,7 @@ class ExtractionResult:
 def extract_from_text(text: str) -> ExtractionResult:
     """Extract composition from plain text (paste-text path)."""
     result = ExtractionResult()
+    result.gsm = _extract_gsm(text)
     fibers = extract_by_regex(text)
     if fibers:
         block = CompositionBlock(part="unknown", fibers=fibers, source="regex")
@@ -173,6 +203,12 @@ def extract_from_payload(payload: dict) -> ExtractionResult:
             result.extraction_method = "regex"
 
     # Step 4: GPT fallback handled by caller (needs openai_client)
+
+    # Extract GSM from candidate text if not already found
+    if not result.gsm:
+        all_candidate = " ".join(payload.get("candidate_blocks") or [])
+        result.gsm = _extract_gsm(all_candidate)
+
     # Step 5+6: Normalize and validate
     if result.composition_blocks:
         result = _apply_normalization(result)

@@ -297,3 +297,35 @@ def test_composition_in_short_element_no_context_needed():
     assert len(text) <= 300  # must trigger is_short_text path
     result = extract_by_regex(text)
     assert len(result) == 2
+
+
+# ── Task GSM: GSM extraction ──────────────────────────────────────────────────
+
+def test_gsm_extraction_direct():
+    from scoring.extractor import _extract_gsm
+    assert _extract_gsm("200gsm cotton blend") == 200.0
+    assert _extract_gsm("180 GSM fabric weight") == 180.0
+    assert _extract_gsm("300GSM heavyweight") == 300.0
+
+def test_gsm_extraction_oz_conversion():
+    from scoring.extractor import _extract_gsm
+    # 6 oz/sq yd × 33.9 = 203.4 gsm — within range
+    result = _extract_gsm("6 oz/sq yd cotton")
+    assert result is not None
+    assert abs(result - 203.4) < 1.0
+
+def test_gsm_extraction_out_of_range():
+    from scoring.extractor import _extract_gsm
+    assert _extract_gsm("25gsm tissue paper") is None   # below 80
+    assert _extract_gsm("700gsm industrial mat") is None  # above 600
+    assert _extract_gsm("no weight here") is None
+
+def test_gsm_populates_extraction_result():
+    from scoring.extractor import extract_from_text
+    result = extract_from_text("75% cotton, 25% polyester. Fabric weight: 220gsm.")
+    assert result.gsm == 220.0
+
+def test_gsm_none_when_absent():
+    from scoring.extractor import extract_from_text
+    result = extract_from_text("75% cotton, 25% polyester.")
+    assert result.gsm is None
