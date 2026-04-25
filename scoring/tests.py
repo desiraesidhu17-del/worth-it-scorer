@@ -463,7 +463,7 @@ def test_construction_incorporated_in_worth_it_score():
         composition=[{"fiber": "cotton", "pct": 100}],
         price=80.0,
         category="dress",
-        gsm=220.0,   # provide GSM to neutralise confidence penalty
+        gsm=220.0,   # baseline GSM: 0 modifier, same for both items — isolates construction delta
     )
     result_good = score_item(**shared_kwargs, construction=good_construction)
     result_poor = score_item(**shared_kwargs, construction=poor_construction)

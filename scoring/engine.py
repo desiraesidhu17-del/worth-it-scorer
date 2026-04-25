@@ -205,17 +205,17 @@ def score_item(
     # ── 7. Cost per wash ─────────────────────────────────────────────────────
     cost_per_wash = get_cost_per_wash(price or 0, material_score)
 
-    # ── 9. Construction score ─────────────────────────────────────────────────
+    # ── 8. Construction score ─────────────────────────────────────────────────
     if construction is None:
         construction = score_from_price(price, category)
 
-    # ── 8. Worth-It Score ────────────────────────────────────────────────────
+    # ── 9. Worth-It Score ────────────────────────────────────────────────────
     # Material score minus price pressure penalty plus construction contribution.
     # Construction: (score−5)×0.8, capped ±5. Low confidence uses half modifier.
     pressure_penalty = _price_pressure_penalty(price_pressure["level"])
     construction_contrib = _construction_contribution(construction)
     worth_it_score = round(
-        max(0.0, material_score - pressure_penalty + construction_contrib), 1
+        max(0.0, min(100.0, material_score - pressure_penalty + construction_contrib)), 1
     )
 
     # ── 10. Human-readable outputs ────────────────────────────────────────────
