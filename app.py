@@ -1,4 +1,5 @@
 import os, re, base64, hashlib, json, time
+from typing import Optional
 import uuid as _uuid_module
 import requests as http_requests
 from bs4 import BeautifulSoup
@@ -88,6 +89,7 @@ def score_endpoint():
     """
     try:
         construction = None  # populated below when source text/image is available
+        gsm: Optional[float] = None
 
         # ── Path A: URL scan ──────────────────────────────────────────────────
         if request.is_json and request.get_json(force=True, silent=True) and \
@@ -142,6 +144,12 @@ def score_endpoint():
             price = _parse_price(data.get("price"))
             category = data.get("category", "other")
             brand = data.get("brand") or None
+            gsm = data.get("gsm")
+            if gsm is not None:
+                try:
+                    gsm = float(gsm)
+                except (TypeError, ValueError):
+                    gsm = None
 
             if not composition:
                 return jsonify({"error": "composition is required"}), 400
@@ -185,6 +193,7 @@ def score_endpoint():
             price=price,
             category=category,
             construction=construction,
+            gsm=gsm,
         )
         return jsonify(result.to_dict())
 
@@ -593,6 +602,7 @@ def score_page_endpoint():
             price=price,
             category=category,
             construction=construction,
+            gsm=result_extraction.gsm,
         )
         result_dict = score_result.to_dict()
         result_dict.update(result_extraction.to_dict())
