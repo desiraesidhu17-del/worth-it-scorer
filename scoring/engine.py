@@ -199,6 +199,18 @@ def score_item(
         category=category,
     )
 
+    # ── 5.5. Confidence-aware GSM penalty ────────────────────────────────────
+    # When GSM is missing for cotton/linen-heavy t-shirts and dresses, the base
+    # score may be optimistic — lightweight fabric significantly hurts durability.
+    # Subtract 3 to reflect this uncertainty. Separate from the ±15 combined cap.
+    if gsm is None:
+        _gsm_sensitive_fibers = {"cotton", "linen"}
+        _heavy_natural = any(
+            e.canonical in _gsm_sensitive_fibers and e.pct > 50 for e in known_entries
+        )
+        if _heavy_natural and category in ("t-shirt", "dress"):
+            material_score = round(max(0.0, material_score - 3), 1)
+
     # ── 6. Price pressure ────────────────────────────────────────────────────
     price_pressure = evaluate_price_pressure(price, category, material_score)
 
@@ -419,7 +431,7 @@ def _assess_confidence(
     is_gsm_sensitive = any(
         e.canonical in gsm_sensitive_fibers and e.pct > 40 for e in entries if e.known
     )
-    if is_gsm_sensitive and category in ("t-shirt", "other"):
+    if is_gsm_sensitive and category in ("t-shirt", "dress"):
         issues.append("gsm_unknown")
         notes.append(CONFIDENCE_NOTES["medium_gsm"])
 

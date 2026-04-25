@@ -501,6 +501,68 @@ def test_construction_low_confidence_half_modifier():
     )
 
 
+def test_gsm_confidence_penalty_reduces_score():
+    """
+    Cotton t-shirt with no GSM should score 3 points lower than
+    same t-shirt with GSM=200 (baseline, 0 modifier). Missing GSM
+    means we can't confirm weight — nudge down slightly.
+    """
+    no_gsm = score_item(
+        composition=[{"fiber": "cotton", "pct": 100}],
+        price=30.0,
+        category="t-shirt",
+    )
+    with_gsm_baseline = score_item(
+        composition=[{"fiber": "cotton", "pct": 100}],
+        price=30.0,
+        category="t-shirt",
+        gsm=200.0,  # baseline: 0 GSM modifier, no confidence penalty
+    )
+    # Expected: with_gsm_baseline is 3 points higher than no_gsm
+    assert abs(with_gsm_baseline.material_score - no_gsm.material_score - 3) < 0.15, (
+        f"Expected no-GSM to be 3 lower: with_gsm={with_gsm_baseline.material_score}, "
+        f"no_gsm={no_gsm.material_score}"
+    )
+
+
+def test_gsm_confidence_penalty_does_not_fire_for_polyester():
+    """The -3 confidence penalty does not apply to polyester (not cotton/linen)."""
+    poly_no_gsm = score_item(
+        composition=[{"fiber": "polyester", "pct": 100}],
+        price=30.0,
+        category="t-shirt",
+    )
+    poly_with_gsm = score_item(
+        composition=[{"fiber": "polyester", "pct": 100}],
+        price=30.0,
+        category="t-shirt",
+        gsm=120.0,
+    )
+    # Neither GSM modifier nor penalty applies — scores should be identical
+    assert poly_no_gsm.material_score == poly_with_gsm.material_score
+
+
+def test_gsm_confidence_penalty_fires_for_dress():
+    """
+    Linen dress with no GSM should get the -3 confidence penalty.
+    With GSM=200 (0 modifier) it should score 3 higher.
+    """
+    no_gsm = score_item(
+        composition=[{"fiber": "linen", "pct": 100}],
+        price=80.0,
+        category="dress",
+    )
+    with_gsm = score_item(
+        composition=[{"fiber": "linen", "pct": 100}],
+        price=80.0,
+        category="dress",
+        gsm=200.0,
+    )
+    assert with_gsm.material_score > no_gsm.material_score, (
+        f"Dress with GSM should score higher: {with_gsm.material_score} vs {no_gsm.material_score}"
+    )
+
+
 # ── Runner ────────────────────────────────────────────────────────────────────
 
 def run_all():
@@ -529,6 +591,9 @@ def run_all():
         ("4-fiber blend no dominance bonus",          test_fiber_dominance_four_fiber_penalty),
         ("Construction score lifts worth_it_score",   test_construction_incorporated_in_worth_it_score),
         ("Low confidence uses half construction mod", test_construction_low_confidence_half_modifier),
+        ("GSM missing: -3 confidence penalty",        test_gsm_confidence_penalty_reduces_score),
+        ("No GSM penalty for polyester",              test_gsm_confidence_penalty_does_not_fire_for_polyester),
+        ("GSM penalty fires for linen dress",         test_gsm_confidence_penalty_fires_for_dress),
     ]
 
     print("\nScoring Engine Tests\n" + "─" * 40)
