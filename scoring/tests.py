@@ -558,8 +558,9 @@ def test_gsm_confidence_penalty_fires_for_dress():
         category="dress",
         gsm=200.0,
     )
-    assert with_gsm.material_score > no_gsm.material_score, (
-        f"Dress with GSM should score higher: {with_gsm.material_score} vs {no_gsm.material_score}"
+    delta = with_gsm.material_score - no_gsm.material_score
+    assert abs(delta - 3) < 0.15, (
+        f"Cotton dress without GSM should score 3 points lower; got delta={delta:.2f}"
     )
 
 

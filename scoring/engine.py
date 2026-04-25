@@ -204,11 +204,13 @@ def score_item(
     # score may be optimistic — lightweight fabric significantly hurts durability.
     # Subtract 3 to reflect this uncertainty. Separate from the ±15 combined cap.
     if gsm is None:
-        _gsm_sensitive_fibers = {"cotton", "linen"}
-        _heavy_natural = any(
-            e.canonical in _gsm_sensitive_fibers and e.pct > 50 for e in known_entries
+        gsm_sensitive_fibers = _CELLULOSE_FIBERS
+        heavy_natural = any(
+            e.canonical in gsm_sensitive_fibers and e.pct > 50 for e in known_entries
         )
-        if _heavy_natural and category in ("t-shirt", "dress"):
+        # Per-fiber check (not sum) is intentional — only penalise single-fiber dominance.
+        # A 30% cotton / 25% linen / 45% polyester blend does not trigger this penalty.
+        if heavy_natural and category in ("t-shirt", "dress"):
             material_score = round(max(0.0, material_score - 3), 1)
 
     # ── 6. Price pressure ────────────────────────────────────────────────────
@@ -273,6 +275,9 @@ def score_item(
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
+_CELLULOSE_FIBERS: frozenset[str] = frozenset({"cotton", "linen"})
+
+
 def _gsm_modifier_for_score(
     gsm: Optional[float],
     known_entries: list[FiberEntry],
@@ -289,7 +294,7 @@ def _gsm_modifier_for_score(
     if category not in ("t-shirt", "dress"):
         return 0, False
 
-    natural_cellulose = {"cotton", "linen"}
+    natural_cellulose = _CELLULOSE_FIBERS
     dominant = any(e.canonical in natural_cellulose and e.pct > 50 for e in known_entries)
     if not dominant:
         return 0, False
@@ -426,7 +431,7 @@ def _assess_confidence(
         issues.append("blend_unknown")
         notes.append(CONFIDENCE_NOTES["medium_blend"])
 
-    # GSM matters most for cotton-heavy and linen garments in t-shirt category
+    # GSM matters most for cotton-heavy and linen garments in t-shirt and dress categories
     gsm_sensitive_fibers = {"cotton", "linen", "hemp"}
     is_gsm_sensitive = any(
         e.canonical in gsm_sensitive_fibers and e.pct > 40 for e in entries if e.known
