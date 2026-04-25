@@ -440,6 +440,67 @@ def test_fiber_dominance_four_fiber_penalty():
     assert four_fiber.gsm_modifier_applied is False
 
 
+def test_construction_incorporated_in_worth_it_score():
+    """
+    Medium-confidence construction score 8 vs score 2 should produce a 4.8-point
+    difference in worth_it_score: (8-5)*0.8 - (2-5)*0.8 = 2.4 - (-2.4) = 4.8.
+    """
+    from scoring.construction_rubric import ConstructionResult
+
+    good_construction = ConstructionResult(
+        score=8.0,
+        confidence="medium",
+        signals_found=["French seams", "Fully lined"],
+        source="text",
+    )
+    poor_construction = ConstructionResult(
+        score=2.0,
+        confidence="medium",
+        signals_found=["Serged seams"],
+        source="text",
+    )
+    shared_kwargs = dict(
+        composition=[{"fiber": "cotton", "pct": 100}],
+        price=80.0,
+        category="dress",
+        gsm=220.0,   # provide GSM to neutralise confidence penalty
+    )
+    result_good = score_item(**shared_kwargs, construction=good_construction)
+    result_poor = score_item(**shared_kwargs, construction=poor_construction)
+
+    delta = result_good.worth_it_score - result_poor.worth_it_score
+    assert abs(delta - 4.8) < 0.15, (
+        f"Expected worth_it_score delta ~4.8, got {delta:.2f}"
+    )
+    assert result_good.worth_it_score > result_poor.worth_it_score
+
+
+def test_construction_low_confidence_half_modifier():
+    """
+    Low-confidence construction uses half the modifier.
+    Score 8, low confidence: contribution = (8-5)*0.8/2 = 1.2.
+    Score 8, medium confidence: contribution = (8-5)*0.8 = 2.4.
+    Delta should be 1.2.
+    """
+    from scoring.construction_rubric import ConstructionResult
+
+    med = ConstructionResult(score=8.0, confidence="medium", source="text")
+    low = ConstructionResult(score=8.0, confidence="low", source="price_floor")
+
+    shared = dict(
+        composition=[{"fiber": "wool", "pct": 100}],
+        price=150.0,
+        category="sweater",
+    )
+    result_med = score_item(**shared, construction=med)
+    result_low = score_item(**shared, construction=low)
+
+    delta = result_med.worth_it_score - result_low.worth_it_score
+    assert abs(delta - 1.2) < 0.15, (
+        f"Expected delta ~1.2 between medium/low confidence, got {delta:.2f}"
+    )
+
+
 # ── Runner ────────────────────────────────────────────────────────────────────
 
 def run_all():
@@ -466,6 +527,8 @@ def run_all():
         ("Cotton in activewear penalised",            test_cotton_activewear_penalty),
         ("Viscose in dress penalised",                test_viscose_dress_category_penalty),
         ("4-fiber blend no dominance bonus",          test_fiber_dominance_four_fiber_penalty),
+        ("Construction score lifts worth_it_score",   test_construction_incorporated_in_worth_it_score),
+        ("Low confidence uses half construction mod", test_construction_low_confidence_half_modifier),
     ]
 
     print("\nScoring Engine Tests\n" + "─" * 40)

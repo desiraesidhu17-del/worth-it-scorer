@@ -205,15 +205,18 @@ def score_item(
     # ── 7. Cost per wash ─────────────────────────────────────────────────────
     cost_per_wash = get_cost_per_wash(price or 0, material_score)
 
-    # ── 8. Worth-It Score ────────────────────────────────────────────────────
-    # Primarily driven by material score, modulated by price pressure.
-    # Price pressure penalty scales the score down when price is unjustified.
-    pressure_penalty = _price_pressure_penalty(price_pressure["level"])
-    worth_it_score = round(max(0.0, material_score - pressure_penalty), 1)
-
     # ── 9. Construction score ─────────────────────────────────────────────────
     if construction is None:
         construction = score_from_price(price, category)
+
+    # ── 8. Worth-It Score ────────────────────────────────────────────────────
+    # Material score minus price pressure penalty plus construction contribution.
+    # Construction: (score−5)×0.8, capped ±5. Low confidence uses half modifier.
+    pressure_penalty = _price_pressure_penalty(price_pressure["level"])
+    construction_contrib = _construction_contribution(construction)
+    worth_it_score = round(
+        max(0.0, material_score - pressure_penalty + construction_contrib), 1
+    )
 
     # ── 10. Human-readable outputs ────────────────────────────────────────────
     comp_dicts = [{"canonical": e.canonical, "pct": e.pct} for e in known_entries]
@@ -344,6 +347,24 @@ def _category_fit_adjustment(known_entries: list[FiberEntry], category: str) -> 
             adj -= 4
 
     return adj
+
+
+def _construction_contribution(construction: ConstructionResult) -> float:
+    """
+    Returns construction score contribution to worth_it_score.
+
+    Formula: (score - 5) * 0.8, capped at ±5 points.
+    Neutral midpoint: score 5 → contribution 0.
+    Score 7 → +1.6; score 3 → -1.6; score 10 → +4.0; score 0 → -4.0.
+
+    Low confidence (price floor only): half the modifier, reflecting low certainty.
+    Medium/high confidence (text or image signals): full modifier.
+    """
+    raw = (construction.score - 5) * 0.8
+    capped = max(-5.0, min(5.0, raw))
+    if construction.confidence == "low":
+        return capped * 0.5
+    return capped
 
 
 def _normalise_category(category: str) -> str:
