@@ -156,24 +156,26 @@ function renderResult(r) {
   const pp = r.price_pressure || {};
   const cpw = r.cost_per_wash || {};
 
-  // Headline
-  document.getElementById("card-headline").textContent = r.headline || "";
-  document.getElementById("card-headline-sub").textContent = r.headline_sub || "";
+  // Headline — technical override replaces with neutral copy
+  const isTech = r.technical_override && r.technical_override.length > 0;
+  document.getElementById("card-headline").textContent = isTech ? "Technical performance gear" : (r.headline || "");
+  document.getElementById("card-headline-sub").textContent = isTech
+    ? "Score reflects fiber composition only. Value is driven by membrane technology and construction."
+    : (r.headline_sub || "");
 
-  // Watch for
+  // Watch for — always hidden for technical gear (fiber warnings are misleading for membrane products)
   const watchItems = r.watch_for || [];
   const watchRow = document.getElementById("watch-for-row");
-  if (watchItems.length > 0) {
+  if (!isTech && watchItems.length > 0) {
     document.getElementById("watch-for-items").textContent = watchItems.join("  ·  ");
     watchRow.hidden = false;
   } else {
     watchRow.hidden = true;
   }
 
-  // Score line
-  document.getElementById("score-number").textContent = score;
-  document.getElementById("score-number").style.color = scoreColor(score);
-
+  // Score line — suppress numeric score for technical gear; show muted label instead
+  const scoreNumEl = document.getElementById("score-number");
+  const scoreSepEl = document.getElementById("score-sep");
   const bandLabels = {
     very_low:  "VERY LOW DURABILITY",
     low:       "LOW DURABILITY",
@@ -181,7 +183,21 @@ function renderResult(r) {
     good:      "ABOVE AVERAGE DURABILITY",
     excellent: "STRONG DURABILITY",
   };
-  document.getElementById("score-band-label").textContent = bandLabels[r.score_band] || "";
+  if (isTech) {
+    scoreNumEl.textContent = "Fiber score";
+    scoreNumEl.style.color = "var(--muted)";
+    scoreNumEl.style.fontSize = "1rem";
+    scoreNumEl.style.fontWeight = "normal";
+    if (scoreSepEl) scoreSepEl.hidden = true;
+    document.getElementById("score-band-label").textContent = "";
+  } else {
+    scoreNumEl.textContent = score;
+    scoreNumEl.style.color = scoreColor(score);
+    scoreNumEl.style.fontSize = "";
+    scoreNumEl.style.fontWeight = "";
+    if (scoreSepEl) scoreSepEl.hidden = false;
+    document.getElementById("score-band-label").textContent = bandLabels[r.score_band] || "";
+  }
 
   // Confidence
   const conf = r.confidence || "low";
@@ -197,9 +213,11 @@ function renderResult(r) {
   document.getElementById("stat-material").textContent = `${material} / 100`;
   document.getElementById("stat-material").style.color = scoreColor(material);
 
-  const pressureColors = { low: "var(--green)", moderate: "var(--yellow)", high: "var(--red)", extreme: "var(--red)", unknown: "var(--muted)" };
-  document.getElementById("stat-pressure").textContent = pp.label || "—";
-  document.getElementById("stat-pressure").style.color = pressureColors[pp.level] || "var(--muted)";
+  if (!isTech) {
+    const pressureColors = { low: "var(--green)", moderate: "var(--yellow)", high: "var(--red)", extreme: "var(--red)", unknown: "var(--muted)" };
+    document.getElementById("stat-pressure").textContent = pp.label || "—";
+    document.getElementById("stat-pressure").style.color = pressureColors[pp.level] || "var(--muted)";
+  }
 
   const cpwNote = document.getElementById("cpw-note");
   if (cpw.cost_per_wash_low != null) {
@@ -216,9 +234,11 @@ function renderResult(r) {
   const pd = document.getElementById("price-detail");
   const techOverrideEl = document.getElementById("technical-override");
   const techSignalsList = document.getElementById("technical-signals-list");
+  const priceFitStat = document.getElementById("price-fit-stat");
 
-  if (r.technical_override && r.technical_override.length > 0) {
-    // Hide normal price detail; show technical override panel
+  if (isTech) {
+    // Hide price fit stat + price detail; show technical override panel
+    if (priceFitStat) priceFitStat.hidden = true;
     pd.hidden = true;
     techSignalsList.innerHTML = "";
     r.technical_override.forEach(sig => {
@@ -227,7 +247,16 @@ function renderResult(r) {
       techSignalsList.appendChild(li);
     });
     techOverrideEl.hidden = false;
+    // Explicit resets — ensure no stale values from a prior non-tech render
+    document.getElementById("card-headline").textContent = "Technical performance gear";
+    document.getElementById("card-headline-sub").textContent = "Score reflects fiber composition only. Value is driven by membrane technology and construction.";
+    scoreNumEl.textContent = "Fiber score";
+    scoreNumEl.style.color = "var(--muted)";
+    document.getElementById("score-band-label").textContent = "";
+    document.getElementById("stat-pressure").textContent = "—";
+    document.getElementById("stat-pressure").style.color = "var(--muted)";
   } else {
+    if (priceFitStat) priceFitStat.hidden = false;
     techOverrideEl.hidden = true;
     if (pp.detail) { pd.textContent = pp.detail; pd.hidden = false; }
     else { pd.hidden = true; }
@@ -374,18 +403,23 @@ document.getElementById("btn-reset").addEventListener("click", () => {
     if (el) el.value = "";
   });
   document.getElementById("category-manual").value = "other";
-  document.getElementById("score-number").textContent = "—";
-  document.getElementById("score-number").style.color = "";
+  const resetScoreEl = document.getElementById("score-number");
+  resetScoreEl.textContent = "—";
+  resetScoreEl.style.color = "";
+  resetScoreEl.style.fontSize = "";
+  resetScoreEl.style.fontWeight = "";
+  const resetSepEl = document.getElementById("score-sep");
+  if (resetSepEl) resetSepEl.hidden = false;
   document.getElementById("card-headline").textContent = "";
   document.getElementById("card-headline-sub").textContent = "";
   document.getElementById("watch-for-items").textContent = "";
   document.getElementById("watch-for-row").hidden = true;
-  document.getElementById("score-number").textContent = "—";
-  document.getElementById("score-number").style.color = "";
   document.getElementById("score-band-label").textContent = "";
   document.getElementById("construction-not-assessed").hidden = true;
   document.getElementById("technical-override").hidden = true;
   document.getElementById("technical-signals-list").innerHTML = "";
+  const priceFitReset = document.getElementById("price-fit-stat");
+  if (priceFitReset) priceFitReset.hidden = false;
 });
 
 /* ── UI helpers ──────────────────────────────────────────────────────────── */
