@@ -1,5 +1,4 @@
 import os, re, base64, hashlib, json, time
-from typing import Optional
 import uuid as _uuid_module
 import requests as http_requests
 from bs4 import BeautifulSoup
@@ -89,7 +88,7 @@ def score_endpoint():
     """
     try:
         construction = None  # populated below when source text/image is available
-        gsm: Optional[float] = None
+        gsm: float | None = None
 
         # ── Path A: URL scan ──────────────────────────────────────────────────
         if request.is_json and request.get_json(force=True, silent=True) and \
