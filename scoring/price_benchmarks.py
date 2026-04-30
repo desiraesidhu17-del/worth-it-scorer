@@ -165,6 +165,20 @@ def evaluate_price_pressure(
 
     low, high = benchmark.price_min, benchmark.price_max
 
+    # Check if price is drastically below the range floor — signals quality shortcuts
+    if price < low * 0.5:
+        return {
+            "level": "undercut",
+            "label": "Price suggests quality tradeoffs",
+            "benchmark": benchmark,
+            "detail": (
+                f"At ${price:.0f}, this is well below the typical range (${low:.0f}–${high:.0f}) "
+                f"for {benchmark.tier}-tier {_pluralize(category)}. "
+                f"Prices this low usually reflect shortcuts in construction, finishing, or fiber quality "
+                f"that the composition label alone won't show."
+            ),
+        }
+
     # How far above the expected range is the price?
     if price <= high:
         ratio = 0.0

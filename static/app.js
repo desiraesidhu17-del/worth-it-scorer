@@ -214,7 +214,7 @@ function renderResult(r) {
   document.getElementById("stat-material").style.color = scoreColor(material);
 
   if (!isTech) {
-    const pressureColors = { low: "var(--green)", moderate: "var(--yellow)", high: "var(--red)", extreme: "var(--red)", unknown: "var(--muted)" };
+    const pressureColors = { low: "var(--green)", moderate: "var(--yellow)", high: "var(--red)", extreme: "var(--red)", undercut: "var(--yellow)", unknown: "var(--muted)" };
     document.getElementById("stat-pressure").textContent = pp.label || "—";
     document.getElementById("stat-pressure").style.color = pressureColors[pp.level] || "var(--muted)";
   }

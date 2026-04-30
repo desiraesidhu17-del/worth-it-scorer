@@ -77,7 +77,8 @@ def test_merino_wool_sweater():
 def test_cotton_tshirt_budget():
     """
     Basic cotton t-shirt: 100% cotton, $12.
-    Should score mid on material (cotton is decent), low price pressure at $12.
+    Should score mid on material (cotton is decent).
+    $12 is well below 50% of the quality-tier floor ($35), so price pressure = "undercut".
     """
     result = score_item(
         composition=[{"fiber": "cotton", "pct": 100}],
@@ -87,8 +88,8 @@ def test_cotton_tshirt_budget():
     assert 35 <= result.material_score <= 75, (
         f"Cotton t-shirt material score should be 35–75, got {result.material_score}"
     )
-    assert result.price_pressure["level"] == "low", (
-        f"$12 cotton tee should have low price pressure, got {result.price_pressure['level']}"
+    assert result.price_pressure["level"] == "undercut", (
+        f"$12 cotton tee is far below floor — expected undercut, got {result.price_pressure['level']}"
     )
     # GSM confidence note should fire for cotton t-shirt
     assert result.confidence in ("medium", "high"), (
