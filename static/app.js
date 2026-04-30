@@ -255,11 +255,17 @@ function renderResult(r) {
     document.getElementById("score-band-label").textContent = "";
     document.getElementById("stat-pressure").textContent = "—";
     document.getElementById("stat-pressure").style.color = "var(--muted)";
+    document.getElementById("verdict-sentence").textContent = "";
+    const cpwStatRow = document.getElementById("cpw-stat-row");
+    if (cpwStatRow) cpwStatRow.hidden = true;
+    cpwNote.hidden = true;
   } else {
     if (priceFitStat) priceFitStat.hidden = false;
     techOverrideEl.hidden = true;
     if (pp.detail) { pd.textContent = pp.detail; pd.hidden = false; }
     else { pd.hidden = true; }
+    const cpwStatRow = document.getElementById("cpw-stat-row");
+    if (cpwStatRow) cpwStatRow.hidden = false;
   }
 
   setBar("pilling",      props.pilling);
@@ -420,6 +426,8 @@ document.getElementById("btn-reset").addEventListener("click", () => {
   document.getElementById("technical-signals-list").innerHTML = "";
   const priceFitReset = document.getElementById("price-fit-stat");
   if (priceFitReset) priceFitReset.hidden = false;
+  const cpwRowReset = document.getElementById("cpw-stat-row");
+  if (cpwRowReset) cpwRowReset.hidden = false;
 });
 
 /* ── UI helpers ──────────────────────────────────────────────────────────── */
