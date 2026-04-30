@@ -37,6 +37,7 @@ btn.addEventListener("click", async () => {
           meta: {},
           candidate_blocks: [],
           price: null,
+          category: null,
         };
 
         // Regex that matches any label mentioning fiber/material/composition keywords.
@@ -265,6 +266,49 @@ btn.addEventListener("click", async () => {
         if (!r.candidate_blocks.length) {
           const bodyText = (document.body.innerText || "").trim().slice(0, 3000);
           if (bodyText.length > 100) r.candidate_blocks.push(bodyText);
+        }
+
+        // Category detection — URL path + breadcrumb text
+        // Checked in priority order; first match wins.
+        const CATEGORY_SIGNALS = [
+          ["dress",      /\b(dress(?:es)?|skirt)\b/i],
+          ["sweater",    /\b(sweater|knitwear|cardigan|pullover|crewneck|turtleneck)\b/i],
+          ["t-shirt",    /\b(t-shirt|tee|tank[-\s]?top|crop[-\s]?top)\b/i],
+          ["jeans",      /\b(jeans?|denim|trousers?|pants?|chinos?)\b/i],
+          ["outerwear",  /\b(jacket|coat|parka|puffer|anorak|windbreaker|blazer)\b/i],
+          ["activewear", /\b(leggings?|activewear|sports?[-\s]?bra|yoga|athletic)\b/i],
+        ];
+        const detectCategory = text => {
+          for (const [cat, re] of CATEGORY_SIGNALS) {
+            if (re.test(text)) return cat;
+          }
+          return null;
+        };
+
+        // 1. URL path (most reliable — always present, keyword is in the slug)
+        r.category = detectCategory(window.location.pathname);
+
+        // 2. Breadcrumb text — catches nav-level category labels like "Dresses"
+        if (!r.category) {
+          const breadcrumbSelectors = [
+            "[aria-label='breadcrumb']",
+            "[class*='breadcrumb']",
+            "[itemtype*='BreadcrumbList']",
+            "nav ol", "nav ul",
+          ];
+          for (const sel of breadcrumbSelectors) {
+            const el = document.querySelector(sel);
+            if (el) {
+              r.category = detectCategory(el.textContent || "");
+              if (r.category) break;
+            }
+          }
+        }
+
+        // 3. Page <h1> product title — last DOM fallback before backend inference
+        if (!r.category) {
+          const h1 = document.querySelector("h1");
+          if (h1) r.category = detectCategory(h1.textContent || "");
         }
 
         return r;

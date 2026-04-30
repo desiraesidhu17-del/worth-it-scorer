@@ -127,6 +127,19 @@ def get_construction_floor(price: float) -> dict:
         return CONSTRUCTION_FLOORS["over_150"]
 
 
+_CATEGORY_PLURAL = {
+    "dress":      "dresses",
+    "jeans":      "jeans",
+    "outerwear":  "outerwear",
+    "activewear": "activewear",
+    "other":      "items",
+}
+
+
+def _pluralize(category: str) -> str:
+    return _CATEGORY_PLURAL.get(category, category + "s")
+
+
 def evaluate_price_pressure(
     price: float,
     category: str,
@@ -163,14 +176,14 @@ def evaluate_price_pressure(
         label = "Fairly priced"
         detail = (
             f"At ${price:.0f}, this is within the typical range (${low:.0f}–${high:.0f}) "
-            f"for {benchmark.tier}-tier {category}s. The price is consistent with the material quality."
+            f"for {benchmark.tier}-tier {_pluralize(category)}. The price is consistent with the material quality."
         )
     elif ratio <= 0.5:
         level = "moderate"
         label = "Slightly overpriced"
         detail = (
             f"At ${price:.0f}, this is above the typical range (${low:.0f}–${high:.0f}) "
-            f"for {benchmark.tier}-tier {category}s. You are paying a modest premium for this material quality."
+            f"for {benchmark.tier}-tier {_pluralize(category)}. You are paying a modest premium for this material quality."
         )
     elif ratio <= 1.5:
         level = "high"

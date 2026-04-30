@@ -221,8 +221,34 @@ def extract_from_payload(payload: dict) -> ExtractionResult:
 
     if payload.get("category"):
         result.category = payload["category"]
+    else:
+        # Infer category from URL + og:title — extension never sends this field
+        infer_text = " ".join(filter(None, [
+            payload.get("url", ""),
+            (payload.get("meta") or {}).get("og:title", ""),
+        ]))
+        result.category = _infer_category(infer_text) or result.category
 
     return result
+
+
+_CATEGORY_PATTERNS = [
+    ("dress",      r"\b(dress(?:es)?|skirt|slip)\b"),
+    ("sweater",    r"\b(sweater|knitwear|cardigan|pullover|crewneck|turtleneck|knit)\b"),
+    ("t-shirt",    r"\b(t-shirt|tee|tank\s*top|crop\s*top)\b"),
+    ("jeans",      r"\b(jeans?|denim|trousers?|pants?|chinos?|slacks)\b"),
+    ("outerwear",  r"\b(jacket|coat|parka|puffer|anorak|windbreaker|outerwear|blazer)\b"),
+    ("activewear", r"\b(leggings?|activewear|sports?\s*bra|shorts?|gym|yoga|athletic)\b"),
+]
+
+
+def _infer_category(text: str) -> Optional[str]:
+    """Return a category string inferred from URL or product title, or None."""
+    lowered = text.lower()
+    for category, pattern in _CATEGORY_PATTERNS:
+        if re.search(pattern, lowered):
+            return category
+    return None
 
 
 # ── Step 3: Contextual regex ────────────────────────────────────────────────

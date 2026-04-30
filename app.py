@@ -563,7 +563,7 @@ def score_page_endpoint():
     try:
         data = request.get_json(force=True, silent=True) or {}
         price = _parse_price(data.get("price"))
-        category = data.get("category", "other")
+        category = data.get("category") or "other"
 
         # Run production extraction pipeline
         from scoring.extractor import extract_from_payload, _call_gpt_resolver

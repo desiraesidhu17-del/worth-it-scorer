@@ -177,11 +177,11 @@ function renderResult(r) {
   const scoreNumEl = document.getElementById("score-number");
   const scoreSepEl = document.getElementById("score-sep");
   const bandLabels = {
-    very_low:  "VERY LOW DURABILITY",
-    low:       "LOW DURABILITY",
+    very_low:  "LOW DURABILITY · wears down quickly",
+    low:       "BELOW AVERAGE DURABILITY",
     mid:       "AVERAGE DURABILITY",
-    good:      "ABOVE AVERAGE DURABILITY",
-    excellent: "STRONG DURABILITY",
+    good:      "SOLID DURABILITY",
+    excellent: "HIGH DURABILITY · built to last",
   };
   if (isTech) {
     scoreNumEl.textContent = "Fiber score";
