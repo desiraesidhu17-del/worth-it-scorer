@@ -99,11 +99,13 @@ _TEXT_SIGNALS_POSITIVE: list[tuple[str, float, str]] = [
     (r"chain[-\s]stitch",            1.0, "Chain-stitched"),
     (r"topstitch",                   0.5, "Topstitching"),
     (r"interlock",                   0.5, "Interlock knit"),
-    (r"lined",                       0.5, "Lined"),
+    (r"\blined\b(?!\s+for\s+added\s+warmth)", 0.5, "Lined"),
 ]
 
 _TEXT_SIGNALS_NEGATIVE: list[tuple[str, float, str]] = [
-    (r"unlined",                    -0.5, "Unlined"),
+    (r"\bunlined\b",                -0.5, "Unlined"),
+    (r"lined for added warmth:\s*no", -0.5, "Unlined"),
+    (r"not lined",                  -0.5, "Unlined"),
     (r"serged",                     -0.5, "Serged seams"),
     (r"overlock",                   -0.5, "Overlocked seams"),
     (r"plastic button",             -0.5, "Plastic buttons"),

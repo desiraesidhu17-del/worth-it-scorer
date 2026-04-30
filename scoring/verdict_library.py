@@ -355,6 +355,14 @@ def get_headline(
     """
     band = get_score_band(score)
 
+    # Step 0: undercut override — fiber score is real but price signals hidden build problems
+    if price_pressure_level == "undercut":
+        return (
+            "Strong fiber, uncertain build quality",
+            "The material composition scores well, but prices this low typically mean shortcuts "
+            "in construction and finishing that fiber data alone can't show.",
+        )
+
     # Step 2: B-lite override
     if band in _PREMIUM_OVERRIDE_BANDS:
         if get_dominant_fiber_class(composition) == "premium":

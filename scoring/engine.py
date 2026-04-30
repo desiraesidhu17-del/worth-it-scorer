@@ -217,7 +217,11 @@ def score_item(
     price_pressure = evaluate_price_pressure(price, category, material_score)
 
     # ── 7. Cost per wash ─────────────────────────────────────────────────────
-    cost_per_wash = get_cost_per_wash(price or 0, material_score)
+    # Suppress for undercut items — lifespan assumptions don't hold at budget prices
+    if price_pressure.get("level") == "undercut":
+        cost_per_wash = {}
+    else:
+        cost_per_wash = get_cost_per_wash(price or 0, material_score)
 
     # ── 8. Construction score ─────────────────────────────────────────────────
     if construction is None:
