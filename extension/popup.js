@@ -42,8 +42,9 @@ btn.addEventListener("click", async () => {
 
         // Regex that matches any label mentioning fiber/material/composition keywords.
         // Covers: "Content", "Fabric & Care", "Composition, Care & Origin" (Zara),
-        // "Product Details" (Madewell), "Materials & Care" (Aritzia), etc.
-        const LABEL_RE = /\b(material|fabric|composition|fibre?|shell|lining|body|trim|care|details?|construction|content)\b/i;
+        // "Product Details" (Madewell), "Materials & Care" (Aritzia),
+        // "Description" (Shein, H&M), "Specifications" (some retailers), etc.
+        const LABEL_RE = /\b(material|fabric|composition|fibre?|shell|lining|body|trim|care|details?|construction|content|description|specifications?|product\s*info)\b/i;
 
         // Step 0: Auto-expand collapsed accordions whose label matches LABEL_RE
         // so that hidden composition text is in the DOM before we read it.
