@@ -562,6 +562,7 @@ def score_page_endpoint():
 
     try:
         data = request.get_json(force=True, silent=True) or {}
+        passive = bool(data.get("passive", False))
         price = _parse_price(data.get("price"))
         category = data.get("category") or "other"
 
@@ -569,8 +570,8 @@ def score_page_endpoint():
         from scoring.extractor import extract_from_payload, _call_gpt_resolver
         result_extraction = extract_from_payload(data)
 
-        # GPT fallback if still no composition
-        if not result_extraction.composition_blocks:
+        # GPT fallback if still no composition — skipped for passive scans (cost control)
+        if not result_extraction.composition_blocks and not passive:
             candidate_text = " ".join(data.get("candidate_blocks") or [])
             if candidate_text:
                 result_extraction = _call_gpt_resolver(candidate_text, openai_client)
@@ -578,7 +579,8 @@ def score_page_endpoint():
         if not result_extraction.composition_blocks:
             return jsonify({
                 "error": "No fiber composition found on this page.",
-                "error_type": "empty"
+                "error_type": "empty",
+                "passive": passive,
             }), 422
 
         composition = result_extraction.main_composition or (
@@ -613,15 +615,19 @@ def score_page_endpoint():
             if tech["is_technical"]:
                 result_dict["technical_override"] = tech["signals_found"]
 
-        # Store with TTL
+        # Store with TTL — 30 min for passive scans (badge must survive until popup opens)
+        ttl = 1800 if passive else _RESULT_TTL_SECONDS
         result_id = str(_uuid_module.uuid4())
         _result_store[result_id] = {
             "result": result_dict,
-            "expires_at": time.time() + _RESULT_TTL_SECONDS,
+            "expires_at": time.time() + ttl,
         }
         _cleanup_result_store()
 
-        return jsonify({"result_id": result_id})
+        return jsonify({
+            "result_id": result_id,
+            "verdict_bucket": result_dict.get("verdict_bucket", "not_enough_info"),
+        })
 
     except OpenAIError as e:
         return jsonify({"error": str(e)}), 500
