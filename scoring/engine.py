@@ -91,6 +91,7 @@ class ScoreResult:
     # Metadata
     methodology_version: str = METHODOLOGY_VERSION
     unknown_fibers: list[str] = field(default_factory=list)
+    verdict_bucket: str = ""              # "worth_it" | "mixed" | "overpriced" | "not_enough_info"
 
     def to_dict(self) -> dict:
         d = asdict(self)
@@ -252,6 +253,8 @@ def score_item(
         band,
     )
 
+    verdict_bucket = get_verdict_bucket(worth_it_score, confidence, price_pressure["level"])
+
     return ScoreResult(
         composition=entries,
         price=price,
@@ -274,6 +277,7 @@ def score_item(
         gsm=gsm,
         gsm_modifier=gsm_mod,
         gsm_modifier_applied=gsm_mod_applied,
+        verdict_bucket=verdict_bucket,
     )
 
 
@@ -467,6 +471,28 @@ def _price_pressure_penalty(level: str) -> float:
     }.get(level, 0)
 
 
+def get_verdict_bucket(
+    worth_it_score: float,
+    confidence: str,
+    price_pressure_level: str,
+) -> str:
+    """
+    Map score + confidence + price pressure → one of four verdict labels.
+
+    not_enough_info: low confidence or no price data
+    overpriced:      price pressure is high or extreme
+    worth_it:        worth_it_score >= 65 with adequate price signal
+    mixed:           everything else
+    """
+    if confidence == "low" or price_pressure_level == "unknown":
+        return "not_enough_info"
+    if price_pressure_level in ("high", "extreme"):
+        return "overpriced"
+    if worth_it_score >= 65:
+        return "worth_it"
+    return "mixed"
+
+
 def _no_data_result(
     entries: list[FiberEntry],
     price: Optional[float],
@@ -491,4 +517,5 @@ def _no_data_result(
         headline="No composition data",
         headline_sub="Score cannot be calculated without fiber composition information.",
         watch_for=[],
+        verdict_bucket="not_enough_info",
     )

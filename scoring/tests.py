@@ -565,6 +565,96 @@ def test_gsm_confidence_penalty_fires_for_dress():
     )
 
 
+def test_verdict_bucket_worth_it():
+    """Merino sweater at fair price → worth_it."""
+    result = score_item(
+        composition=[{"fiber": "merino", "pct": 100}],
+        price=80.0,
+        category="sweater",
+    )
+    assert result.verdict_bucket == "worth_it", (
+        f"Merino at fair price should be worth_it, got {result.verdict_bucket} "
+        f"(score={result.worth_it_score}, level={result.price_pressure['level']})"
+    )
+
+
+def test_verdict_bucket_overpriced_extreme():
+    """Cotton t-shirt at $300 → overpriced (extreme price pressure)."""
+    result = score_item(
+        composition=[{"fiber": "cotton", "pct": 100}],
+        price=300.0,
+        category="t-shirt",
+    )
+    assert result.verdict_bucket == "overpriced", (
+        f"Cotton t-shirt at $300 should be overpriced, got {result.verdict_bucket} "
+        f"(score={result.worth_it_score}, level={result.price_pressure['level']})"
+    )
+
+
+def test_verdict_bucket_mixed_low_score_fair_price():
+    """Acrylic tee at fair price → mixed (not overpriced — price is fair)."""
+    result = score_item(
+        composition=[{"fiber": "acrylic", "pct": 100}],
+        price=25.0,
+        category="t-shirt",
+    )
+    assert result.verdict_bucket == "mixed", (
+        f"Acrylic tee at fair price should be mixed, got {result.verdict_bucket} "
+        f"(score={result.worth_it_score}, level={result.price_pressure['level']})"
+    )
+
+
+def test_verdict_bucket_not_enough_info_low_confidence():
+    """Unknown fiber → low confidence → not_enough_info."""
+    result = score_item(
+        composition=[{"fiber": "unknown_fiber_xyz", "pct": 100}],
+        price=50.0,
+        category="t-shirt",
+    )
+    assert result.verdict_bucket == "not_enough_info", (
+        f"Unknown fiber should give not_enough_info, got {result.verdict_bucket}"
+    )
+
+
+def test_verdict_bucket_not_enough_info_no_price():
+    """No price → unknown pressure level → not_enough_info."""
+    result = score_item(
+        composition=[{"fiber": "cotton", "pct": 100}],
+        price=None,
+        category="t-shirt",
+    )
+    assert result.verdict_bucket == "not_enough_info", (
+        f"No price should give not_enough_info, got {result.verdict_bucket}"
+    )
+
+
+def test_verdict_bucket_overpriced_high_pressure():
+    """Polyester tee at $200 → high/extreme pressure → overpriced."""
+    result = score_item(
+        composition=[{"fiber": "polyester", "pct": 100}],
+        price=200.0,
+        category="t-shirt",
+    )
+    assert result.price_pressure["level"] in ("high", "extreme"), (
+        f"Poly tee at $200 should have high/extreme pressure, got {result.price_pressure['level']}"
+    )
+    assert result.verdict_bucket == "overpriced", (
+        f"Should be overpriced, got {result.verdict_bucket}"
+    )
+
+
+def test_verdict_bucket_field_always_present():
+    """verdict_bucket is always one of the four valid values."""
+    result = score_item(
+        composition=[{"fiber": "silk", "pct": 100}],
+        price=180.0,
+        category="dress",
+    )
+    assert result.verdict_bucket in ("worth_it", "mixed", "overpriced", "not_enough_info"), (
+        f"verdict_bucket must be one of four values, got {result.verdict_bucket!r}"
+    )
+
+
 # ── Runner ────────────────────────────────────────────────────────────────────
 
 def run_all():
@@ -596,6 +686,13 @@ def run_all():
         ("GSM missing: -3 confidence penalty",        test_gsm_confidence_penalty_reduces_score),
         ("No GSM penalty for polyester",              test_gsm_confidence_penalty_does_not_fire_for_polyester),
         ("GSM penalty fires for linen dress",         test_gsm_confidence_penalty_fires_for_dress),
+        ("Verdict bucket: worth_it",                   test_verdict_bucket_worth_it),
+        ("Verdict bucket: overpriced extreme",         test_verdict_bucket_overpriced_extreme),
+        ("Verdict bucket: mixed low score fair price", test_verdict_bucket_mixed_low_score_fair_price),
+        ("Verdict bucket: not_enough_info low conf",  test_verdict_bucket_not_enough_info_low_confidence),
+        ("Verdict bucket: not_enough_info no price",  test_verdict_bucket_not_enough_info_no_price),
+        ("Verdict bucket: overpriced high pressure",  test_verdict_bucket_overpriced_high_pressure),
+        ("Verdict bucket: field always present",       test_verdict_bucket_field_always_present),
     ]
 
     print("\nScoring Engine Tests\n" + "─" * 40)
