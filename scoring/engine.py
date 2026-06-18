@@ -481,13 +481,15 @@ def get_verdict_bucket(
 
     not_enough_info: low confidence or no price data
     overpriced:      price pressure is high or extreme
+    mixed:           undercut prices (quality shortcuts likely) or mid-range scores
     worth_it:        worth_it_score >= 65 with adequate price signal
-    mixed:           everything else
     """
     if confidence == "low" or price_pressure_level == "unknown":
         return "not_enough_info"
     if price_pressure_level in ("high", "extreme"):
         return "overpriced"
+    if price_pressure_level == "undercut":
+        return "mixed"   # price this low usually means construction shortcuts
     if worth_it_score >= 65:
         return "worth_it"
     return "mixed"

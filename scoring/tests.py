@@ -643,6 +643,21 @@ def test_verdict_bucket_overpriced_high_pressure():
     )
 
 
+def test_verdict_bucket_undercut_is_mixed():
+    """Cotton t-shirt at $12 (undercut) → mixed, not worth_it."""
+    result = score_item(
+        composition=[{"fiber": "cotton", "pct": 100}],
+        price=12.0,
+        category="t-shirt",
+    )
+    assert result.price_pressure["level"] == "undercut", (
+        f"$12 cotton tee should be undercut, got {result.price_pressure['level']}"
+    )
+    assert result.verdict_bucket == "mixed", (
+        f"Undercut price should give mixed (not worth_it), got {result.verdict_bucket}"
+    )
+
+
 def test_verdict_bucket_field_always_present():
     """verdict_bucket is always one of the four valid values."""
     result = score_item(
@@ -692,6 +707,7 @@ def run_all():
         ("Verdict bucket: not_enough_info low conf",  test_verdict_bucket_not_enough_info_low_confidence),
         ("Verdict bucket: not_enough_info no price",  test_verdict_bucket_not_enough_info_no_price),
         ("Verdict bucket: overpriced high pressure",  test_verdict_bucket_overpriced_high_pressure),
+        ("Verdict bucket: undercut is mixed",          test_verdict_bucket_undercut_is_mixed),
         ("Verdict bucket: field always present",       test_verdict_bucket_field_always_present),
     ]
 
