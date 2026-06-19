@@ -277,6 +277,16 @@ function renderResult(r) {
 }
 
 function renderConstruction(c) {
+  // Stat row entry — visible when construction has real signals
+  const constructionStatRow = document.getElementById("construction-stat-row");
+  const statConstruction = document.getElementById("stat-construction");
+  if (c && c.score != null && c.source !== "price_floor") {
+    statConstruction.textContent = `${c.score}/10`;
+    constructionStatRow.removeAttribute("hidden");
+  } else {
+    constructionStatRow.setAttribute("hidden", "");
+  }
+
   const row = document.getElementById("construction-row");
   const notAssessed = document.getElementById("construction-not-assessed");
   const constrHeader = document.querySelector(".section-header-construction");
@@ -428,6 +438,10 @@ document.getElementById("btn-reset").addEventListener("click", () => {
   if (priceFitReset) priceFitReset.hidden = false;
   const cpwRowReset = document.getElementById("cpw-stat-row");
   if (cpwRowReset) cpwRowReset.hidden = false;
+  const constrStatRow = document.getElementById("construction-stat-row");
+  if (constrStatRow) constrStatRow.setAttribute("hidden", "");
+  const statConstr = document.getElementById("stat-construction");
+  if (statConstr) statConstr.textContent = "—";
 });
 
 /* ── UI helpers ──────────────────────────────────────────────────────────── */
