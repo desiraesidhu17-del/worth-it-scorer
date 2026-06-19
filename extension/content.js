@@ -149,10 +149,11 @@
                  s.textDecoration.includes("line-through");
         } catch { return false; }
       };
+      // Note: [class*='regular-price'] intentionally excluded — it matches crossed-out prices.
       for (const group of [
         "[class*='sale-price'],[class*='price--sale'],[class*='price__sale'],[class*='price__current']",
         "[class*='price-item'],[class*='product-price'],[class*='price__amount']",
-        "[class*='price']",
+        "[class*='price']:not([class*='regular-price'])",
       ]) {
         if (r.price) break;
         for (const el of document.querySelectorAll(group)) {
@@ -246,7 +247,7 @@
 
   r.category = detectCategory(window.location.pathname);
   if (!r.category) {
-    for (const sel of ["[aria-label='breadcrumb']", "[class*='breadcrumb']", "nav ol", "nav ul"]) {
+    for (const sel of ["[aria-label='breadcrumb']", "[class*='breadcrumb']", "[itemtype*='BreadcrumbList']", "nav ol", "nav ul"]) {
       const el = document.querySelector(sel);
       if (el) { r.category = detectCategory(el.textContent || ""); if (r.category) break; }
     }
