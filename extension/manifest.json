@@ -1,11 +1,21 @@
 {
   "manifest_version": 3,
   "name": "worth it? — fiber science scorer",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Score any clothing item's quality using fiber science. Works on Zara, ASOS, and all major retailers.",
-  "permissions": ["activeTab", "scripting"],
+  "permissions": ["activeTab", "scripting", "storage", "tabs"],
   "host_permissions": [
     "https://web-production-adff3.up.railway.app/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
   ],
   "action": {
     "default_popup": "popup.html",
