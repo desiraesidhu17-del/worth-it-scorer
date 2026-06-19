@@ -8,53 +8,84 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       width: 280px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: 'Space Mono', 'Courier New', monospace;
       background: #111;
       color: #eee;
       padding: 20px;
     }
-    .logo {
-      font-size: 18px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-      margin-bottom: 4px;
-    }
+    .logo { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 4px; }
     .tagline {
-      font-size: 10px;
-      color: #888;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 20px;
+      font-size: 10px; color: #888; text-transform: uppercase;
+      letter-spacing: 1px; margin-bottom: 20px;
     }
-    #score-btn {
-      width: 100%;
-      padding: 12px;
-      background: #f0c040;
-      color: #111;
-      border: none;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.15s;
-    }
-    #score-btn:disabled { opacity: 0.5; cursor: default; }
-    #score-btn:hover:not(:disabled) { opacity: 0.85; }
-    #status {
-      margin-top: 14px;
+
+    /* ── Verdict chip ── */
+    .verdict-chip {
+      display: inline-block;
+      padding: 6px 14px;
       font-size: 12px;
-      color: #aaa;
-      line-height: 1.5;
-      min-height: 18px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
     }
+    .verdict-chip.worth_it        { background: #4caf50; color: #111; }
+    .verdict-chip.mixed           { background: #f5820a; color: #111; }
+    .verdict-chip.overpriced      { background: #e53935; color: #eee; }
+    .verdict-chip.not_enough_info { background: #555;    color: #eee; }
+
+    .verdict-label { font-size: 11px; color: #888; margin-bottom: 16px; line-height: 1.5; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: block; width: 100%;
+      padding: 10px;
+      background: transparent;
+      color: #eee;
+      border: 1px solid #555;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      margin-bottom: 8px;
+    }
+    .btn:hover:not(:disabled) { background: #eee; color: #111; }
+    .btn:disabled { opacity: 0.4; cursor: default; }
+    .btn.primary { background: #f5820a; color: #111; border-color: #f5820a; }
+    .btn.primary:hover:not(:disabled) { background: #d46a00; border-color: #d46a00; }
+
+    #status { margin-top: 8px; font-size: 11px; color: #888; min-height: 16px; }
     #status.error { color: #e07070; }
+
+    /* States hidden by default; popup.js shows the right one */
+    #state-scanning, #state-done, #state-manual { display: none; }
   </style>
 </head>
 <body>
   <div class="logo">worth it?</div>
   <div class="tagline">Fiber science, not opinion</div>
-  <button id="score-btn">Score this page</button>
+
+  <!-- State: passive scan in progress -->
+  <div id="state-scanning">
+    <p style="color:#888;font-size:12px;line-height:1.6;">Scanning product…</p>
+  </div>
+
+  <!-- State: passive scan complete — show verdict + open card -->
+  <div id="state-done">
+    <div id="verdict-chip" class="verdict-chip"></div>
+    <p id="verdict-label" class="verdict-label"></p>
+    <button id="btn-open-card" class="btn primary">[ OPEN FULL CARD ]</button>
+    <button id="btn-rescan" class="btn">[ RE-SCAN ]</button>
+  </div>
+
+  <!-- State: no passive result — manual scan fallback -->
+  <div id="state-manual">
+    <button id="btn-scan" class="btn primary">[ SCAN PRODUCT ]</button>
+  </div>
+
   <div id="status"></div>
+
   <script src="popup.js"></script>
 </body>
 </html>
