@@ -105,16 +105,21 @@ extension/
 templates/index.html       Web frontend
 static/style.css           All styles (Cold Data theme — cream, Space Mono, zero radius)
 static/app.js              Frontend JS — renders result card (incl. construction stat row)
-docs/active/               Current specs (e.g. current-card-spec.md)
-docs/archive/              Completed plans + old session summaries (history, not active)
+docs/product-brain/        Active Obsidian/project brain (00–06 numbered notes)
+docs/archive/              History — session-summaries/ + completed-plans/ (reference, not direction)
 ```
 
-### Documentation map (source-of-truth split)
-Three top-level files, each with one job — don't let them compete:
-- **CLAUDE.md** (this file) — engineering state: what works, what's deployed, architecture, how to run/test/deploy.
-- **PRODUCT_DECISIONS.md** — product logic & strategy: what the score means, polyester/technical handling, what we're not building.
-- **CURRENT_ROADMAP.md** — what's next, what's frozen, what's "do not build yet."
-- `docs/active/` = current specs · `docs/archive/` = completed/history (read for context, not direction).
+### Documentation structure
+- **CLAUDE.md** (this file, repo root) — engineering source of truth: what works, what's deployed, architecture, how to run/test/deploy.
+- **`docs/product-brain/`** — the active project brain (open as an Obsidian vault). Product intent lives here, not in code docs:
+  - `00_DASHBOARD.md` — objective, phase, active priority, links to everything
+  - `01_PRODUCT_MISSION.md` — what Worth It is / isn't
+  - `02_CURRENT_CARD_SPEC.md` — how the result card should read
+  - `03_PRODUCT_DECISIONS.md` — accepted product decisions
+  - `04_CURRENT_ROADMAP.md` — Now / Next / Later / Do not build yet (CLAUDE.md is the impl truth)
+  - `05_OPEN_QUESTIONS.md` — unresolved questions
+  - `06_CLAUDE_CODE_NEXT_TASK.md` — task template for handing work to Claude Code
+- **`docs/archive/`** — historical reference only: `session-summaries/` and `completed-plans/`. Read for context, not direction.
 
 ### Price Extraction Cascade (popup.js)
 The extension tries these in order, stopping at the first hit:
