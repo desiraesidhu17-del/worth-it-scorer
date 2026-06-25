@@ -10,3 +10,4 @@ uploads/
 *.png
 *.save
 .worktrees/
+.obsidian/
