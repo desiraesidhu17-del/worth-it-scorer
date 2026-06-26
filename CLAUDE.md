@@ -26,7 +26,8 @@ A clothing quality scoring Chrome extension + Flask backend.
 - Sale prices correctly detected on Aritzia, Revolve, and other retailers with crossed-out original prices
 - All price selectors in `try/catch` so failures never break fabric reading
 - `extractor.py` has `_parse_price_raw()` handling CA$, £, €, AU$ etc.
-- 54/54 pytest + 35/35 engine tests passing
+- 59/59 pytest + 35/35 engine tests passing
+- **Swimwear category (Option A) — DONE locally, NOT yet deployed** (bikinis no longer scored as dresses; new `swimwear` regex + price benchmark $70–$200 quality tier)
 - **Cold Data visual redesign — COMPLETE and deployed to Railway**
 - **Headline card redesign — COMPLETE and deployed to Railway**
 - **Technical signal detection — COMPLETE and deployed to Railway** (GORE-TEX, seam sealing, PrimaLoft etc. → full card suppression for technical gear)
@@ -150,7 +151,7 @@ The extension tries these in order, stopping at the first hit:
 ```bash
 cd /Users/desiraesidhu/clothing_quality_backend
 python app.py          # http://localhost:5000
-pytest scoring/test_extractor.py scoring/test_verdict.py   # should be 54 passed
+pytest scoring/test_extractor.py scoring/test_verdict.py   # should be 59 passed
 python -m scoring.tests   # should be 35 passed
 ```
 
@@ -186,3 +187,4 @@ python -m scoring.tests   # should be 35 passed
 | 2026-04-30 | Technical override card suppression (static/app.js + templates/index.html + static/style.css). When `technical_override` signals present: headline → "Technical performance gear"; sub → fiber-only disclaimer; score → "Fiber score" muted label (number + separator hidden); watch-for, verdict sentence, price fit stat, cost-per-wear stat + note all hidden. Added `id="price-fit-stat"`, `id="score-sep"`, `id="cpw-stat-row"` to HTML for JS targeting. Added `[hidden] { display: none !important }` CSS reset so flex rules don't override `hidden` attribute. Verified `technical_override` is a plain array from backend (not `{signals_found: [...]}`) — confirmed via live API test. Commits: 9d5c544, 2cd2d6f. Pushed to Railway. |
 | 2026-06-17 | Ambient Detection + Badge (Plan A, 8 tasks, subagent-driven). Extension now auto-detects product pages and shows a colored badge (WI/MX/OP/?) without user interaction. Key changes: `get_verdict_bucket()` + `verdict_bucket` field on `ScoreResult`; `passive` flag on `/api/score-page` (skips GPT, 30-min TTL, returns `verdict_bucket`); new `content.js` (passive detection — product-page check + extraction); new `background.js` (service worker: receives payload, POSTs to backend, sets per-tab badge + `chrome.storage.session`); `manifest.json` bumped to v0.2.0 (background, content_scripts, storage+tabs perms); `popup.html` 3-state UI (scanning/done/manual); `popup.js` session-aware routing (reads session, shows verdict chip or falls back to manual scan); construction stat added to stats row (hidden at price_floor). 54 pytest + 35 engine tests passing. Pushed to Railway. |
 | 2026-06-19 | Docs reorg — split source-of-truth into three files: `CLAUDE.md` (engineering state), new `PRODUCT_DECISIONS.md` (product logic/strategy — incl. 3 🟡 NEEDS INPUT sections: brand ownership, Shop positioning, discovery sequencing), new `CURRENT_ROADMAP.md` (next/frozen/do-not-build). Created `docs/active/` (current-card-spec.md) and `docs/archive/` (moved all 12 completed plan docs + both old session summaries out of root and `docs/plans/`). Removed empty `docs/plans/` + `docs/superpowers/`. No code changes. |
+| 2026-06-26 | Swimwear category bug fix (Option A, TDD). Root cause: bikinis were scored as **dresses** because the dress regex `\b(dress(?:es)?\|skirt\|slip)\b` caught swim items containing "slip" (slip bikini), "skirt" (swim skirt), or "dress" (cover-up); items that didn't match fell to "other" — also wrong. Fix: added `swimwear` pattern to `_CATEGORY_PATTERNS` **before** dress/activewear (so slip/skirt/shorts swim items win) + `swimwear` `PriceBenchmark` ($12–45 budget / $35–90 mid / $70–200 quality) + plural entry. Bikinis now read "quality-tier swimwear"; real dresses unaffected. 5 new tests (59 pytest + 35 engine). Scope kept minimal — swimwear-specific fiber weights / watch-for language deferred to Option B (needs brainstorm). NOT yet deployed. |

@@ -233,6 +233,9 @@ def extract_from_payload(payload: dict) -> ExtractionResult:
 
 
 _CATEGORY_PATTERNS = [
+    # Swimwear must precede dress/activewear: "slip"/"skirt" match the dress
+    # regex and "shorts" matches activewear, but a swim item should win.
+    ("swimwear",   r"\b(swimwear|swimsuit|swim|bikini|tankini|monokini|one[\s-]?piece|board\s*shorts|rash\s*guard|rashguard)\b"),
     ("dress",      r"\b(dress(?:es)?|skirt|slip)\b"),
     ("sweater",    r"\b(sweater|knitwear|cardigan|pullover|crewneck|turtleneck|knit)\b"),
     ("t-shirt",    r"\b(t-shirt|tee|tank\s*top|crop\s*top)\b"),

@@ -67,6 +67,11 @@ PRICE_BENCHMARKS: list[PriceBenchmark] = [
     PriceBenchmark("activewear", "mid",    41,  65,  25,  70),
     PriceBenchmark("activewear", "quality",66, 100,  55, 160),
 
+    # ── Swimwear (bikinis, one-pieces, tankinis) ──────────────────────────────
+    PriceBenchmark("swimwear", "budget",  0,  40,  12,  45),
+    PriceBenchmark("swimwear", "mid",    41,  65,  35,  90),
+    PriceBenchmark("swimwear", "quality",66, 100,  70, 200),
+
     # ── Other (catch-all) ─────────────────────────────────────────────────────
     PriceBenchmark("other", "budget",  0,  40,   8,  45),
     PriceBenchmark("other", "mid",    41,  65,  35, 100),
@@ -129,6 +134,7 @@ def get_construction_floor(price: float) -> dict:
 
 _CATEGORY_PLURAL = {
     "dress":      "dresses",
+    "swimwear":   "swimwear",
     "jeans":      "jeans",
     "outerwear":  "outerwear",
     "activewear": "activewear",

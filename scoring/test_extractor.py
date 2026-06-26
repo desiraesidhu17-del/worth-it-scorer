@@ -341,3 +341,37 @@ def test_gsm_oz_requires_sq_yd_context():
     # A mid-range false positive cannot be ruled out without context:
     result = _extract_gsm("6 oz cotton tee")            # valid fabric weight
     assert result is not None and abs(result - 203.4) < 1.0  # 6×33.9=203.4
+
+
+# ── Swimwear category (Option A: stop bikinis being scored as dresses) ─────────
+
+def test_swimwear_category_from_bikini():
+    from scoring.extractor import _infer_category
+    assert _infer_category("https://shop.com/products/halter-bikini-top Halter Bikini Top") == "swimwear"
+    assert _infer_category("Ribbed Bandeau Swim Top") == "swimwear"
+    assert _infer_category("https://www.frankiesbikinis.com/products/sage-top Sage Bikini Bottom") == "swimwear"
+    assert _infer_category("Classic One-Piece Swimsuit") == "swimwear"
+    assert _infer_category("Striped Tankini Set") == "swimwear"
+
+def test_swimwear_wins_over_dress_for_slip_and_skirt():
+    from scoring.extractor import _infer_category
+    # These previously matched the dress regex (slip|skirt) — swimwear must win.
+    assert _infer_category("https://shop.com/the-slip-bikini The Slip Bikini Bottom") == "swimwear"
+    assert _infer_category("https://shop.com/wrap-bikini-skirt-bottom Wrap Bikini Skirt Bottom") == "swimwear"
+
+def test_dress_still_matches_real_dresses():
+    from scoring.extractor import _infer_category
+    assert _infer_category("Floral Midi Dress") == "dress"
+    assert _infer_category("Pleated Mini Skirt") == "dress"
+
+def test_swimwear_has_price_benchmark_not_other():
+    from scoring.price_benchmarks import get_benchmark
+    b = get_benchmark("swimwear", 70)
+    assert b is not None
+    assert b.category == "swimwear"
+
+def test_swimwear_price_copy_says_swimwear_not_dresses():
+    from scoring.price_benchmarks import evaluate_price_pressure
+    result = evaluate_price_pressure(120, "swimwear", 70)
+    assert "dress" not in result["detail"].lower()
+    assert "swimwear" in result["detail"].lower()
