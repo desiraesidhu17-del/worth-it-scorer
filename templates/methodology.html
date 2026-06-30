@@ -131,10 +131,27 @@
 
     <div class="method-section" style="margin-top: 8px; margin-bottom: 32px;">
       <p style="font-size: 1rem; color: var(--text); line-height: 1.6;">
-        Every score on this site is derived from published fiber science, not opinion.
-        This page documents exactly how scores are calculated so you can scrutinize the methodology,
+        Every score on this site is built from published fiber science and available product data.
+        This page documents exactly how scores are estimated so you can scrutinize the methodology,
         identify where confidence is limited, and hold us accountable.
-        <span class="version-tag">v1.0</span>
+        <span class="version-tag">v1.1</span>
+      </p>
+    </div>
+
+    <!-- ── What the card is for ──────────────────────────────────────────── -->
+    <div class="method-section">
+      <h2>What this card is for</h2>
+      <p>
+        This is a shopping comparison aid, not a standalone quality calculator.
+        It is designed to help you answer one practical question:
+        <strong style="color: var(--text);">is this item's material quality in line with its price,
+        and would a similar product at this price likely hold up better?</strong>
+      </p>
+      <p>
+        The score does not declare an item "good" or "bad" in the abstract. It estimates how a given
+        fiber composition typically wears, then weighs that against what the price implies — so you can
+        judge a specific item against the next-best alternative you might buy instead. Every figure below
+        is an estimate based on available product data, not a guarantee about any individual garment.
       </p>
     </div>
 
@@ -148,11 +165,14 @@
         and are consistent across garments made from the same fiber.
       </p>
       <p>
-        <strong style="color: var(--text);">What fiber science cannot tell you</strong>:
+        <strong style="color: var(--text);">What fiber science cannot fully tell you</strong>:
         how well a specific garment was constructed.
         A $20 cotton t-shirt and a $120 cotton t-shirt share the same fiber score.
-        Construction quality — seam type, stitch density, lining — requires physical inspection
-        and is not captured in the Material Durability score.
+        Construction quality — seam type, stitch density, lining — is not part of the Material
+        Durability score. We estimate it separately (see Construction Score below) from price tier
+        and any construction signals in the product description or image, and fold that estimate
+        into the final Worth-It Score. It remains an estimate: precise construction quality requires
+        physical inspection.
       </p>
       <p>
         <strong style="color: var(--text);">What price pressure tells you</strong>:
@@ -195,7 +215,7 @@
           <tr><td>Polyester</td><td>85</td><td>90</td><td>80</td><td>20</td></tr>
           <tr><td>Nylon</td><td>80</td><td>95</td><td>75</td><td>30</td></tr>
           <tr><td>Acrylic</td><td>20</td><td>50</td><td>85</td><td>15</td></tr>
-          <tr><td>Cotton</td><td>45</td><td>60</td><td>75</td><td>90</td></tr>
+          <tr><td>Cotton</td><td>50</td><td>60</td><td>75</td><td>90</td></tr>
           <tr><td>Linen</td><td>55</td><td>80</td><td>70</td><td>90</td></tr>
           <tr><td>Wool</td><td>55</td><td>65</td><td>60</td><td>90</td></tr>
           <tr><td>Merino</td><td>60</td><td>65</td><td>62</td><td>92</td></tr>
@@ -222,7 +242,8 @@
         Different garment types place different demands on fibers.
         Pilling matters most in sweaters (worn against skin and other surfaces repeatedly).
         Tensile strength matters most in jeans (stress at seams, stretch zones).
-        Each category weights the four properties accordingly:
+        Moisture management carries the most weight in t-shirts and activewear, where breathability
+        is core to the garment. Each category weights the four properties accordingly:
       </p>
       <div class="weight-grid">
         <div class="weight-cell header">Category</div>
@@ -230,12 +251,41 @@
         <div class="weight-cell header">Tensile</div>
         <div class="weight-cell header">Color</div>
         <div class="weight-cell category-name">Sweater</div><div class="weight-cell">45%</div><div class="weight-cell">25%</div><div class="weight-cell">20%</div>
-        <div class="weight-cell category-name">T-shirt</div><div class="weight-cell">30%</div><div class="weight-cell">35%</div><div class="weight-cell">20%</div>
+        <div class="weight-cell category-name">T-shirt</div><div class="weight-cell">25%</div><div class="weight-cell">25%</div><div class="weight-cell">22%</div>
         <div class="weight-cell category-name">Dress</div><div class="weight-cell">30%</div><div class="weight-cell">25%</div><div class="weight-cell">30%</div>
         <div class="weight-cell category-name">Jeans</div><div class="weight-cell">15%</div><div class="weight-cell">45%</div><div class="weight-cell">30%</div>
         <div class="weight-cell category-name">Outerwear</div><div class="weight-cell">25%</div><div class="weight-cell">35%</div><div class="weight-cell">25%</div>
         <div class="weight-cell category-name">Activewear</div><div class="weight-cell">20%</div><div class="weight-cell">30%</div><div class="weight-cell">20%</div>
       </div>
+      <p style="margin-top: 10px; font-size: 0.82rem;">
+        A fourth property — moisture management — is also weighted but not shown above, so the
+        columns here don't add to 100%. It is the dominant weight for t-shirts (28%) and activewear
+        (30%), and a smaller factor in structured pieces like jeans and sweaters (10% each).
+      </p>
+    </div>
+
+    <!-- ── Material adjustments: GSM ───────────────────────────────────────── -->
+    <div class="method-section">
+      <h2>Fabric weight (GSM)</h2>
+      <p>
+        Fabric weight, measured in grams per square metre (GSM), is captured when a product page
+        lists it. <code>_extract_gsm()</code> scans the product's detail blocks for a stated GSM value
+        (or an ounces-per-square-yard figure it converts). When found, a weight modifier of up to
+        <strong style="color: var(--text);">±10 points</strong> is applied to the material score for
+        cotton- or linen-dominant t-shirts and dresses, where weight strongly predicts durability:
+      </p>
+      <ul>
+        <li>Under 140 GSM — &minus;10 (lightweight; likely to thin and wear quickly)</li>
+        <li>140–179 GSM — &minus;5</li>
+        <li>180–239 GSM — 0 (typical mid-weight baseline)</li>
+        <li>240–299 GSM — +6</li>
+        <li>300 GSM and above — +10 (heavyweight; associated with longer wear)</li>
+      </ul>
+      <p>
+        When GSM is <em>not</em> listed for a cotton/linen-dominant t-shirt or dress, the base score
+        may be optimistic for a lightweight version, so a small &minus;3 adjustment is applied to
+        reflect that uncertainty. This is separate from the weight modifier above.
+      </p>
     </div>
 
     <!-- ── Price pressure ─────────────────────────────────────────────────── -->
@@ -250,6 +300,7 @@
       </p>
       <p>Price pressure levels:</p>
       <ul>
+        <li><span class="score-pill pill-yellow">Undercut</span> — price is below 50% of the benchmark floor. The verdict becomes "price suggests quality tradeoffs": prices this low usually mean construction shortcuts the fiber label won't show, so a low price isn't read as a straightforward deal</li>
         <li><span class="score-pill pill-green">Low</span> — price is within or below the benchmark range</li>
         <li><span class="score-pill pill-yellow">Moderate</span> — up to 50% above benchmark</li>
         <li><span class="score-pill pill-red">High</span> — 50–150% above benchmark</li>
@@ -261,15 +312,17 @@
     <div class="method-section">
       <h2>Worth-It Score</h2>
       <div class="formula-box">
-        Worth-It Score = Material Score − Price Pressure Penalty<br>
+        Worth-It Score = Material Score − Price Pressure Penalty + Construction Contribution<br>
         <span class="comment">
           Penalty: Low = 0 pts &nbsp;·&nbsp; Moderate = 5 pts &nbsp;·&nbsp;
-          High = 15 pts &nbsp;·&nbsp; Extreme = 25 pts
+          High = 15 pts &nbsp;·&nbsp; Extreme = 25 pts<br>
+          Construction: (construction score − 5) × 0.8, capped at ±5 pts
         </span>
       </div>
       <p>
         A high material score with low price pressure produces a high Worth-It Score.
-        The same fiber composition at triple the fair price produces a low one.
+        The same fiber composition at triple the fair price produces a low one. The construction
+        estimate then nudges the result up or down — see the Construction Score section below.
         Score bands:
       </p>
       <ul>
@@ -277,6 +330,45 @@
         <li><span class="score-pill pill-yellow">41–65</span> — Average — price premium may or may not be justified</li>
         <li><span class="score-pill pill-red">0–40</span> — You are paying a significant premium for the fiber quality you're getting</li>
       </ul>
+    </div>
+
+    <!-- ── Construction score ─────────────────────────────────────────────── -->
+    <div class="method-section">
+      <h2>Construction Score</h2>
+      <p>
+        Construction quality is scored on a 0–10 scale and folded into the Worth-It Score using
+        the formula above: <code>(construction score − 5) × 0.8</code>, capped at ±5 points. A score
+        of 5 is neutral; higher pushes the Worth-It Score up, lower pulls it down. When the
+        construction estimate is low-confidence, the contribution is halved.
+      </p>
+      <p>The estimate is built from up to three signals, in increasing order of confidence:</p>
+      <ul>
+        <li><strong style="color:var(--text)">Price floor</strong> (low confidence) — at a given price and category, certain constructions are economically unlikely. This sets a baseline expectation when no other signal is available.</li>
+        <li><strong style="color:var(--text)">Description text</strong> (medium confidence) — construction terms in the product copy (French seams, full lining, double-stitched, serged, plastic hardware) adjust the score, capped at ±3.</li>
+        <li><strong style="color:var(--text)">Product image</strong> (confidence set by the image) — when an image is analysed, visible seam, hem, lining, and hardware details adjust the score.</li>
+      </ul>
+      <p>
+        A brand prior may also nudge the construction estimate by a small, capped amount
+        (no more than ±1.5 points) based on a brand's typical construction tier. Brand grades are
+        used only as a minor input and are not published here.
+      </p>
+    </div>
+
+    <!-- ── Technical override ──────────────────────────────────────────────── -->
+    <div class="method-section">
+      <h2>Technical Gear Override</h2>
+      <p>
+        For performance items — waterproof shells, insulated outerwear, and similar technical gear —
+        value is driven by membrane technology, durable water-repellent (DWR) finishes, and seam
+        sealing far more than by fiber composition. Scoring those items on fiber durability alone
+        would be misleading.
+      </p>
+      <p>
+        When two or more categories of technical signal are detected (for example a membrane brand
+        plus seam sealing), the card applies a technical override: it suppresses the normal
+        price-versus-fiber value judgment and notes that the item's value rests on its construction
+        and technology, which this tool does not attempt to grade.
+      </p>
     </div>
 
     <!-- ── Cost per wash ───────────────────────────────────────────────────── -->
@@ -319,14 +411,20 @@
         Confidence affects how much weight you should place on the score.
         A Low confidence score reflects our best estimate from partial data — treat it accordingly.
       </p>
+      <p>
+        <strong style="color:var(--text)">When there isn't enough to judge.</strong>
+        If the price can't be confirmed or the fiber data is too incomplete to score, the card says
+        "not enough information" rather than forcing a verdict. Honest uncertainty is more useful
+        than a confident wrong answer — we'd rather tell you we can't call it than guess.
+      </p>
     </div>
 
     <!-- ── Limitations ────────────────────────────────────────────────────── -->
     <div class="method-section">
       <h2>Known Limitations</h2>
       <ul>
-        <li><strong style="color:var(--text)">GSM is not captured.</strong> A 180 GSM cotton t-shirt is more durable than a 130 GSM cotton t-shirt with the same composition. We do not currently have GSM data and note this in medium-confidence scores.</li>
-        <li><strong style="color:var(--text)">Construction quality is not scored.</strong> Two garments with identical fiber composition but different seam types, stitch density, and lining will have different real-world durability. This is not yet captured.</li>
+        <li><strong style="color:var(--text)">GSM is only available when listed.</strong> Fabric weight strongly affects durability — a 180 GSM cotton t-shirt outlasts a 130 GSM one with the same composition. We capture and apply GSM when a product page states it, but many pages don't, and in those cases the score carries extra uncertainty (see Fabric Weight above).</li>
+        <li><strong style="color:var(--text)">Construction is estimated, not inspected.</strong> Construction quality is scored from price tier and any signals in the description or image, then folded into the Worth-It Score. Without physical inspection it remains an estimate — two garments with identical fiber composition but different seam types, stitch density, and lining can still differ in real-world durability.</li>
         <li><strong style="color:var(--text)">Fiber scores represent class averages.</strong> A high-grade merino will outperform a low-grade merino despite both being scored as "merino."</li>
         <li><strong style="color:var(--text)">Price benchmarks are calibrated to the US market.</strong> Benchmarks may not reflect pricing in other markets.</li>
         <li><strong style="color:var(--text)">Fiber extraction is AI-assisted.</strong> When you scan a URL or paste product text, GPT-4o-mini extracts the fiber composition. Extraction errors are possible, especially with unusual formatting. Always verify against the source if precision matters.</li>
@@ -337,6 +435,7 @@
     <div class="method-section">
       <h2>Version History</h2>
       <ul>
+        <li><strong style="color:var(--text)">v1.1</strong> — Accuracy corrections aligned with the current scoring engine. Documented GSM extraction and its weight modifier, the construction score's contribution to the Worth-It Score, the "undercut" price level, and the technical-gear override. Corrected the cotton pilling value and the t-shirt category weights. Reframed the page around the comparison use case.</li>
         <li><strong style="color:var(--text)">v1.0</strong> — Initial release. Material durability scoring, price pressure, cost-per-wash. 25 fibers, 20 blend interactions, 6 garment categories.</li>
       </ul>
     </div>
@@ -346,7 +445,7 @@
   <footer>
     <a href="/">← Back to scoring</a>
     &nbsp;·&nbsp;
-    <span>Methodology v1.0</span>
+    <span>Methodology v1.1</span>
   </footer>
 
   <script src="/static/app.js"></script>
