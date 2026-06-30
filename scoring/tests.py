@@ -9,6 +9,7 @@ Each test prints PASS or FAIL with a brief explanation.
 
 import sys
 from .engine import score_item
+from .technical_signals import detect_technical_signals
 
 
 def _run(name: str, fn):
@@ -670,6 +671,140 @@ def test_verdict_bucket_field_always_present():
     )
 
 
+# ── Technical signal extraction (Commit 1) ────────────────────────────────────
+
+def test_tech_goretex_taped_is_waterproof_shell():
+    """GORE-TEX + fully taped seams → technical, type waterproof_shell."""
+    r = detect_technical_signals("GORE-TEX shell with fully taped seams.")
+    assert r["is_technical"] is True, r
+    assert r["technical_type"] == "waterproof_shell", (
+        f"Expected waterproof_shell, got {r['technical_type']!r}"
+    )
+
+
+def test_tech_dwr_alone_not_technical():
+    """DWR mentioned alone (one category) → is_technical False (threshold unchanged)."""
+    r = detect_technical_signals("Treated with a durable water repellent finish.")
+    assert r["is_technical"] is False, (
+        f"DWR alone should not be technical, got {r}"
+    )
+    assert r["signal_count"] == 1, (
+        f"DWR alone is one signal category, got {r['signal_count']}"
+    )
+
+
+def test_tech_waterproof_rating_spec_extracted():
+    """'20,000 mm' → waterproof_rating spec with correct value + matched_text."""
+    r = detect_technical_signals("GORE-TEX shell rated to 20,000 mm waterproof.")
+    wp = [s for s in r["specs"] if s["label"] == "Waterproof rating"]
+    assert wp, f"Expected a Waterproof rating spec, got {r['specs']}"
+    assert "20,000" in wp[0]["value"] and "mm" in wp[0]["value"], wp[0]
+    assert "20,000 mm" in wp[0]["matched_text"], wp[0]
+
+
+def test_tech_fill_power_and_insulation_specs():
+    """'800-fill down' → fill power spec (800) + insulation spec (down)."""
+    r = detect_technical_signals("Insulated with 800-fill down for warmth.")
+    by_label = {s["label"]: s for s in r["specs"]}
+    assert "Fill power" in by_label, f"Expected Fill power spec, got {r['specs']}"
+    assert by_label["Fill power"]["value"] == "800", by_label["Fill power"]
+    assert "Insulation" in by_label, f"Expected Insulation spec, got {r['specs']}"
+    assert by_label["Insulation"]["value"] == "down", by_label["Insulation"]
+
+
+def test_tech_shell_layer_and_face_fabric_specs():
+    """'3-layer ripstop' → shell construction spec + face fabric spec."""
+    r = detect_technical_signals("3-layer ripstop construction.")
+    by_label = {s["label"]: s for s in r["specs"]}
+    assert "Shell construction" in by_label, f"Expected Shell construction, got {r['specs']}"
+    assert by_label["Shell construction"]["value"] == "3-layer", by_label["Shell construction"]
+    assert "Face fabric" in by_label, f"Expected Face fabric, got {r['specs']}"
+    assert by_label["Face fabric"]["value"] == "ripstop", by_label["Face fabric"]
+
+
+def test_tech_breathability_spec_extracted():
+    """'15,000 g/m²/24h' → breathability spec, value traces to matched_text."""
+    r = detect_technical_signals("Breathable membrane rated 15,000 g/m²/24h.")
+    br = [s for s in r["specs"] if s["label"] == "Breathability"]
+    assert br, f"Expected a Breathability spec, got {r['specs']}"
+    assert "15,000" in br[0]["value"], br[0]
+    assert "g/m" in br[0]["matched_text"], br[0]
+
+
+def test_tech_fashion_puffer_not_technical_no_invented_specs():
+    """Fashion puffer with no real technical signal → not technical, no specs."""
+    r = detect_technical_signals(
+        "Cozy puffer jacket, 100% polyester fill. Machine washable."
+    )
+    assert r["is_technical"] is False, f"Fashion puffer should not be technical, got {r}"
+    assert r["specs"] == [], f"Must not invent specs for a fashion puffer, got {r['specs']}"
+
+
+def test_tech_ambiguous_is_general_with_generic_compare():
+    """Ambiguous technical item → technical_general + generic compare_on fallback."""
+    r = detect_technical_signals(
+        "Engineered with DWR treatment and a tested MVTR for moisture transport."
+    )
+    assert r["is_technical"] is True, f"DWR + MVTR is two categories → technical, got {r}"
+    assert r["technical_type"] == "technical_general", (
+        f"Ambiguous item should be technical_general, got {r['technical_type']!r}"
+    )
+    assert r["compare_on"] == [
+        "Technical specs", "Construction", "Fabric durability", "Intended use"
+    ], f"Expected generic fallback compare_on, got {r['compare_on']}"
+
+
+def test_tech_data_shape_when_technical():
+    """When technical: specs and compare_on are lists; every spec has the 3 keys."""
+    r = detect_technical_signals(
+        "GORE-TEX 3-layer shell, 20,000 mm, fully taped seams, "
+        "800-fill down, ripstop face, YKK AquaGuard zips."
+    )
+    assert r["is_technical"] is True, r
+    assert isinstance(r["specs"], list) and len(r["specs"]) >= 1, r["specs"]
+    assert isinstance(r["compare_on"], list) and len(r["compare_on"]) >= 1, r["compare_on"]
+    for s in r["specs"]:
+        assert set(s.keys()) == {"label", "value", "matched_text"}, s
+        assert isinstance(s["label"], str) and s["label"], s
+        assert isinstance(s["value"], str) and s["value"], s
+        assert isinstance(s["matched_text"], str) and s["matched_text"], s
+
+
+def test_tech_fill_power_plus_dwr_is_technical():
+    """Fill power + DWR = two categories → technical (detector counts fill power)."""
+    r = detect_technical_signals("800-fill down with DWR finish")
+    assert r["is_technical"] is True, (
+        f"800-fill down + DWR should be two categories, got {r}"
+    )
+
+
+def test_tech_fill_power_alone_not_technical():
+    """800-fill down alone extracts the spec but is one category → not technical."""
+    r = detect_technical_signals("800-fill down")
+    by_label = {s["label"]: s for s in r["specs"]}
+    assert by_label.get("Fill power", {}).get("value") == "800", r["specs"]
+    assert r["is_technical"] is False, (
+        f"Fill power alone is one signal, must not be technical, got {r}"
+    )
+    assert r["signal_count"] == 1, r
+
+
+def test_tech_generic_fill_language_not_technical_no_specs():
+    """Generic 'polyester fill puffer' → no fill-power figure, not technical, no specs."""
+    r = detect_technical_signals("polyester fill puffer jacket")
+    assert r["is_technical"] is False, f"Generic fill language must not be technical, got {r}"
+    assert r["specs"] == [], f"Must not invent specs for generic fill language, got {r['specs']}"
+
+
+def test_tech_insulated_jacket_type():
+    """Fill power + shell membrane + DWR → technical, type insulated_jacket."""
+    r = detect_technical_signals("650-fill down, Pertex Quantum shell, DWR")
+    assert r["is_technical"] is True, r
+    assert r["technical_type"] == "insulated_jacket", (
+        f"Expected insulated_jacket, got {r['technical_type']!r}"
+    )
+
+
 # ── Runner ────────────────────────────────────────────────────────────────────
 
 def run_all():
@@ -709,6 +844,19 @@ def run_all():
         ("Verdict bucket: overpriced high pressure",  test_verdict_bucket_overpriced_high_pressure),
         ("Verdict bucket: undercut is mixed",          test_verdict_bucket_undercut_is_mixed),
         ("Verdict bucket: field always present",       test_verdict_bucket_field_always_present),
+        ("Tech: GORE-TEX + taped → waterproof_shell",  test_tech_goretex_taped_is_waterproof_shell),
+        ("Tech: DWR alone not technical",              test_tech_dwr_alone_not_technical),
+        ("Tech: waterproof rating spec",               test_tech_waterproof_rating_spec_extracted),
+        ("Tech: fill power + insulation specs",        test_tech_fill_power_and_insulation_specs),
+        ("Tech: shell layer + face fabric specs",      test_tech_shell_layer_and_face_fabric_specs),
+        ("Tech: breathability spec",                   test_tech_breathability_spec_extracted),
+        ("Tech: fashion puffer no invented specs",     test_tech_fashion_puffer_not_technical_no_invented_specs),
+        ("Tech: ambiguous → general + generic compare", test_tech_ambiguous_is_general_with_generic_compare),
+        ("Tech: data shape when technical",            test_tech_data_shape_when_technical),
+        ("Tech: fill power + DWR is technical",         test_tech_fill_power_plus_dwr_is_technical),
+        ("Tech: fill power alone not technical",        test_tech_fill_power_alone_not_technical),
+        ("Tech: generic fill language not technical",   test_tech_generic_fill_language_not_technical_no_specs),
+        ("Tech: insulated jacket type",                 test_tech_insulated_jacket_type),
     ]
 
     print("\nScoring Engine Tests\n" + "─" * 40)
