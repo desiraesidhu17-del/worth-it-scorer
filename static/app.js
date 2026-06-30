@@ -156,11 +156,12 @@ function renderResult(r) {
   const pp = r.price_pressure || {};
   const cpw = r.cost_per_wash || {};
 
-  // Headline — technical override replaces with neutral copy
+  // Headline — technical gear leads with the comparison job, not a disclaimer
   const isTech = r.technical_override && r.technical_override.length > 0;
+  const techType = (r.technical_analysis && r.technical_analysis.technical_type) || "technical_general";
   document.getElementById("card-headline").textContent = isTech ? "Technical performance gear" : (r.headline || "");
   document.getElementById("card-headline-sub").textContent = isTech
-    ? "Score reflects fiber composition only. Value is driven by membrane technology and construction."
+    ? techSubline(techType)
     : (r.headline_sub || "");
 
   // Watch for — always hidden for technical gear (fiber warnings are misleading for membrane products)
@@ -232,24 +233,18 @@ function renderResult(r) {
   }
 
   const pd = document.getElementById("price-detail");
-  const techOverrideEl = document.getElementById("technical-override");
-  const techSignalsList = document.getElementById("technical-signals-list");
+  const techPanel = document.getElementById("technical-analysis");
   const priceFitStat = document.getElementById("price-fit-stat");
 
   if (isTech) {
-    // Hide price fit stat + price detail; show technical override panel
+    // Hide price fit stat + price detail; show technical analysis panel
     if (priceFitStat) priceFitStat.hidden = true;
     pd.hidden = true;
-    techSignalsList.innerHTML = "";
-    r.technical_override.forEach(sig => {
-      const li = document.createElement("li");
-      li.textContent = sig;
-      techSignalsList.appendChild(li);
-    });
-    techOverrideEl.hidden = false;
+    renderTechnicalPanel(r.technical_analysis || {});
+    techPanel.hidden = false;
     // Explicit resets — ensure no stale values from a prior non-tech render
     document.getElementById("card-headline").textContent = "Technical performance gear";
-    document.getElementById("card-headline-sub").textContent = "Score reflects fiber composition only. Value is driven by membrane technology and construction.";
+    document.getElementById("card-headline-sub").textContent = techSubline(techType);
     scoreNumEl.textContent = "Fiber score";
     scoreNumEl.style.color = "var(--muted)";
     document.getElementById("score-band-label").textContent = "";
@@ -261,7 +256,7 @@ function renderResult(r) {
     cpwNote.hidden = true;
   } else {
     if (priceFitStat) priceFitStat.hidden = false;
-    techOverrideEl.hidden = true;
+    techPanel.hidden = true;
     if (pp.detail) { pd.textContent = pp.detail; pd.hidden = false; }
     else { pd.hidden = true; }
     const cpwStatRow = document.getElementById("cpw-stat-row");
@@ -274,6 +269,59 @@ function renderResult(r) {
   setBar("moisture",     props.moisture);
 
   renderConstruction(r.construction);
+}
+
+// Subline varies by technical_type — leads with the comparison job, never an
+// insulation prompt on a shell. Unrecognized types fall back to the generic line.
+function techSubline(type) {
+  switch (type) {
+    case "waterproof_shell":
+    case "softshell":
+      return "Compare this piece on weather protection, breathability, and build — not fiber blend alone.";
+    case "insulated_jacket":
+      return "Compare this piece on warmth, shell fabric, insulation quality, and weather resistance — not fiber blend alone.";
+    case "technical_midlayer":
+      return "Compare this piece on warmth, breathability, and fabric — not fiber blend alone.";
+    default:
+      return "Compare this piece on its listed technical specs and build details — not fiber blend alone.";
+  }
+}
+
+// Render extracted specs (dotted-leader rows) + the Compare next: prompt line.
+// Only renders specs that are present — never a placeholder or invented row.
+function renderTechnicalPanel(ta) {
+  const specs = ta.specs || [];
+  const compareOn = ta.compare_on || [];
+
+  const specsEl = document.getElementById("technical-specs");
+  specsEl.innerHTML = "";
+  specs.forEach(s => {
+    const row = document.createElement("div");
+    row.className = "stat";
+    const label = document.createElement("span");
+    label.className = "stat-label";
+    label.textContent = s.label;
+    const value = document.createElement("span");
+    value.className = "stat-value";
+    value.textContent = s.value;
+    row.appendChild(label);
+    row.appendChild(value);
+    specsEl.appendChild(row);
+  });
+  specsEl.hidden = specs.length === 0;
+
+  const compareEl = document.getElementById("technical-compare");
+  if (compareOn.length > 0) {
+    compareEl.innerHTML = "";
+    const lbl = document.createElement("span");
+    lbl.className = "technical-compare-label";
+    lbl.textContent = "Compare next:";
+    compareEl.appendChild(lbl);
+    compareEl.appendChild(document.createTextNode(" " + compareOn.join("  ·  ")));
+    compareEl.hidden = false;
+  } else {
+    compareEl.hidden = true;
+  }
 }
 
 function renderConstruction(c) {
@@ -432,8 +480,10 @@ document.getElementById("btn-reset").addEventListener("click", () => {
   document.getElementById("watch-for-row").hidden = true;
   document.getElementById("score-band-label").textContent = "";
   document.getElementById("construction-not-assessed").hidden = true;
-  document.getElementById("technical-override").hidden = true;
-  document.getElementById("technical-signals-list").innerHTML = "";
+  document.getElementById("technical-analysis").hidden = true;
+  document.getElementById("technical-specs").innerHTML = "";
+  const techCompareReset = document.getElementById("technical-compare");
+  if (techCompareReset) { techCompareReset.textContent = ""; techCompareReset.hidden = true; }
   const priceFitReset = document.getElementById("price-fit-stat");
   if (priceFitReset) priceFitReset.hidden = false;
   const cpwRowReset = document.getElementById("cpw-stat-row");

@@ -614,7 +614,8 @@ def score_page_endpoint():
             from scoring.technical_signals import detect_technical_signals
             tech = detect_technical_signals(candidate_text)
             if tech["is_technical"]:
-                result_dict["technical_override"] = tech["signals_found"]
+                result_dict["technical_analysis"] = tech
+                result_dict["technical_override"] = tech["signals_found"]  # keep for backward compat
 
         # Store with TTL — 30 min for passive scans (badge must survive until popup opens)
         ttl = 1800 if passive else _RESULT_TTL_SECONDS
