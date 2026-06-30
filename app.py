@@ -50,6 +50,7 @@ _BLOCKED_DOMAINS = {
     "boohoo.com":        "On the Boohoo page, scroll to 'Product details' — copy the composition line and paste it here.",
     "nordstrom.com":     "On the Nordstrom page, scroll to 'Details & Care' — copy those lines and paste them here.",
     "bloomingdales.com": "On the Bloomingdale's page, scroll to 'Details' — copy the fabric content lines and paste them here.",
+    "walmart.com":       "On the Walmart product page, scroll to 'Specifications' — copy the 'Fabric Material' (or 'Material') line and paste it here.",
 }
 
 # Browser-like headers for URL fetching
