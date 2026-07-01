@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "worth-it-server",
-      "runtimeExecutable": "/Users/desiraesidhu/.pyenv/versions/3.11.9/bin/python",
-      "runtimeArgs": ["/Users/desiraesidhu/clothing_quality_backend/app.py"],
+      "runtimeExecutable": "/bin/bash",
+      "runtimeArgs": ["-c", "cd /Users/desiraesidhu/clothing_quality_backend && /Users/desiraesidhu/.pyenv/versions/3.11.9/bin/python app.py"],
       "port": 5001
     }
   ]
