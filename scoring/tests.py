@@ -10,6 +10,7 @@ Each test prints PASS or FAIL with a brief explanation.
 import sys
 from .engine import score_item
 from .technical_signals import detect_technical_signals
+from .brand_db import lookup_brand, brand_construction_modifier
 
 
 def _run(name: str, fn):
@@ -854,6 +855,53 @@ def test_tech_dwr_display_pfc_free_long_form():
     assert spec["matched_text"] == "PFC-free durable water repellent", spec
 
 
+# ── Brand lookup (exact normalized match, no substring) ───────────────────────
+
+def test_brand_exact_match_equipment():
+    """Exact brand name resolves to its record."""
+    r = lookup_brand("Equipment")
+    assert r is not None and r.name == "Equipment", r
+
+
+def test_brand_no_substring_north_face_equipment():
+    """'the north face equipment' must NOT match the 'Equipment' record."""
+    assert lookup_brand("the north face equipment") is None
+
+
+def test_brand_no_substring_outdoor_equipment():
+    """'outdoor equipment' must NOT match the 'Equipment' record."""
+    assert lookup_brand("outdoor equipment") is None
+
+
+def test_brand_exact_match_reformation():
+    r = lookup_brand("Reformation")
+    assert r is not None and r.name == "Reformation", r
+
+
+def test_brand_strips_legal_suffix_inc():
+    """'Reformation Inc.' normalizes to Reformation."""
+    r = lookup_brand("Reformation Inc.")
+    assert r is not None and r.name == "Reformation", r
+
+
+def test_brand_punctuation_and_space_collapse_jcrew():
+    """'J Crew' and 'j.crew' both collapse to the J.Crew record."""
+    a = lookup_brand("J Crew")
+    b = lookup_brand("j.crew")
+    assert a is not None and a.name == "J.Crew", a
+    assert b is not None and b.name == "J.Crew", b
+
+
+def test_brand_no_substring_gap_in_sentence():
+    """'gap in the stitching' must NOT match the 'Gap' record."""
+    assert lookup_brand("gap in the stitching") is None
+
+
+def test_brand_modifier_none_for_incidental_match():
+    """No spurious construction note for an incidental substring."""
+    assert brand_construction_modifier("the north face equipment") == (0.0, None)
+
+
 # ── Runner ────────────────────────────────────────────────────────────────────
 
 def run_all():
@@ -912,6 +960,14 @@ def run_all():
         ("Tech: DWR display PFAS-free",                 test_tech_dwr_display_pfas_free),
         ("Tech: DWR display PFC-free",                  test_tech_dwr_display_pfc_free),
         ("Tech: DWR display PFC-free long form",        test_tech_dwr_display_pfc_free_long_form),
+        ("Brand: exact match Equipment",               test_brand_exact_match_equipment),
+        ("Brand: no substring north face equipment",   test_brand_no_substring_north_face_equipment),
+        ("Brand: no substring outdoor equipment",      test_brand_no_substring_outdoor_equipment),
+        ("Brand: exact match Reformation",             test_brand_exact_match_reformation),
+        ("Brand: strips legal suffix Inc.",            test_brand_strips_legal_suffix_inc),
+        ("Brand: J Crew / j.crew collapse",            test_brand_punctuation_and_space_collapse_jcrew),
+        ("Brand: no substring gap in sentence",        test_brand_no_substring_gap_in_sentence),
+        ("Brand: no note for incidental match",        test_brand_modifier_none_for_incidental_match),
     ]
 
     print("\nScoring Engine Tests\n" + "─" * 40)

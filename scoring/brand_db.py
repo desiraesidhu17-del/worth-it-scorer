@@ -23,6 +23,7 @@ Data version: 1.0 (manual seed — 60 brands)
 Update frequency: Quarterly review planned.
 """
 
+import re
 from dataclasses import dataclass
 from typing import Optional
 
@@ -431,21 +432,47 @@ GRADE_LABEL: dict[str, str] = {
 }
 
 
+# Trailing legal suffixes stripped during normalization so "Reformation Inc."
+# resolves to "Reformation".
+_LEGAL_SUFFIXES = {"inc", "llc", "co", "ltd", "corp"}
+
+
+def _normalize_brand(name: str) -> str:
+    """
+    Normalize a brand string to a comparison token: lowercase, punctuation
+    removed, whitespace collapsed away, trailing legal suffixes stripped.
+
+    Collapses "j.crew", "j crew", and "jcrew" to the same token. Applied to
+    BOTH the input and every DB key so lookup is exact-equality only — no
+    substring matching, which kept real English keys ("gap", "cos",
+    "equipment") from matching incidental words in an extracted brand string.
+    """
+    # Replace any punctuation with spaces, then tokenize on whitespace.
+    tokens = re.sub(r"[^\w\s]", " ", name.strip().lower()).split()
+    while tokens and tokens[-1] in _LEGAL_SUFFIXES:
+        tokens.pop()
+    return "".join(tokens)
+
+
+# Precomputed normalized index — DB keys collapse to their comparison tokens.
+_NORMALIZED_DB: dict[str, BrandRecord] = {
+    _normalize_brand(db_key): record for db_key, record in BRAND_DB.items()
+}
+
+
 def lookup_brand(brand_name: str) -> BrandRecord | None:
     """
-    Look up a brand by name. Case-insensitive fuzzy match.
-    Returns None if not found.
+    Look up a brand by name via normalized exact match. Returns None when the
+    normalized input does not exactly equal a normalized DB key — a decorated
+    site_name like "Gap Official Store" returns None (no note) rather than a
+    possibly-wrong note. No-note is the safe failure for a trust tool.
     """
     if not brand_name:
         return None
-    key = brand_name.strip().lower()
-    if key in BRAND_DB:
-        return BRAND_DB[key]
-    # Partial match: check if any key is contained in the brand name or vice versa
-    for db_key, record in BRAND_DB.items():
-        if db_key in key or key in db_key:
-            return record
-    return None
+    norm = _normalize_brand(brand_name)
+    if not norm:
+        return None
+    return _NORMALIZED_DB.get(norm)
 
 
 def brand_construction_modifier(brand_name: str, category: str = "") -> tuple[float, str | None]:
