@@ -805,6 +805,55 @@ def test_tech_insulated_jacket_type():
     )
 
 
+def _dwr_spec(text: str) -> dict:
+    r = detect_technical_signals(text)
+    dwr = [s for s in r["specs"] if s["label"] == "Water-repellent finish"]
+    assert dwr, f"Expected a Water-repellent finish spec, got {r['specs']}"
+    return dwr[0]
+
+
+def test_tech_dwr_display_bare_dwr():
+    """'DWR' alone → label 'Water-repellent finish', value 'DWR'."""
+    spec = _dwr_spec("Jacket treated with DWR.")
+    assert spec["value"] == "DWR", spec
+    assert spec["matched_text"] == "DWR", spec
+
+
+def test_tech_dwr_display_durable_water_repellent():
+    """'durable water repellent' → normalized to value 'DWR'."""
+    spec = _dwr_spec("Treated with a durable water repellent finish.")
+    assert spec["value"] == "DWR", spec
+    assert spec["matched_text"] == "durable water repellent", spec
+
+
+def test_tech_dwr_display_water_repellent_finish():
+    """'water-repellent finish' → normalized to value 'DWR'."""
+    spec = _dwr_spec("Coated with a water-repellent finish for light rain.")
+    assert spec["value"] == "DWR", spec
+    assert spec["matched_text"] == "water-repellent finish", spec
+
+
+def test_tech_dwr_display_pfas_free():
+    """'PFAS-free DWR' → value stays 'PFAS-free DWR', matched_text is exact."""
+    spec = _dwr_spec("Finished with PFAS-free DWR for reduced environmental impact.")
+    assert spec["value"] == "PFAS-free DWR", spec
+    assert spec["matched_text"] == "PFAS-free DWR", spec
+
+
+def test_tech_dwr_display_pfc_free():
+    """'PFC-free DWR' → value stays 'PFC-free DWR', matched_text is exact."""
+    spec = _dwr_spec("Finished with PFC-free DWR for reduced environmental impact.")
+    assert spec["value"] == "PFC-free DWR", spec
+    assert spec["matched_text"] == "PFC-free DWR", spec
+
+
+def test_tech_dwr_display_pfc_free_long_form():
+    """'PFC-free durable water repellent' → value 'PFC-free DWR', exact matched_text."""
+    spec = _dwr_spec("Finished with PFC-free durable water repellent treatment.")
+    assert spec["value"] == "PFC-free DWR", spec
+    assert spec["matched_text"] == "PFC-free durable water repellent", spec
+
+
 # ── Runner ────────────────────────────────────────────────────────────────────
 
 def run_all():
@@ -857,6 +906,12 @@ def run_all():
         ("Tech: fill power alone not technical",        test_tech_fill_power_alone_not_technical),
         ("Tech: generic fill language not technical",   test_tech_generic_fill_language_not_technical_no_specs),
         ("Tech: insulated jacket type",                 test_tech_insulated_jacket_type),
+        ("Tech: DWR display bare DWR",                  test_tech_dwr_display_bare_dwr),
+        ("Tech: DWR display durable water repellent",   test_tech_dwr_display_durable_water_repellent),
+        ("Tech: DWR display water-repellent finish",    test_tech_dwr_display_water_repellent_finish),
+        ("Tech: DWR display PFAS-free",                 test_tech_dwr_display_pfas_free),
+        ("Tech: DWR display PFC-free",                  test_tech_dwr_display_pfc_free),
+        ("Tech: DWR display PFC-free long form",        test_tech_dwr_display_pfc_free_long_form),
     ]
 
     print("\nScoring Engine Tests\n" + "─" * 40)

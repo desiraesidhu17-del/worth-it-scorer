@@ -132,14 +132,12 @@ _SEAM_SPEC_PHRASES = [
     "taped seams",
 ]
 
-# DWR finish — includes PFAS/PFC-free variants, ordered specific first.
-_DWR_SPEC_PHRASES = [
-    "PFAS-free DWR",
-    "PFC-free DWR",
-    "PFAS-free durable water repellent",
-    "durable water repellent",
-    "water-repellent finish",
-    "DWR",
+# DWR finish — (canonical display value, pattern), PFAS/PFC-free variants ordered
+# before the generic form so "PFAS-free DWR" doesn't collapse to plain "DWR".
+_DWR_SPEC_TERMS = [
+    ("PFAS-free DWR", r"\bPFAS-free\s+(?:DWR|durable water repellent)\b"),
+    ("PFC-free DWR", r"\bPFC-free\s+(?:DWR|durable water repellent)\b"),
+    ("DWR", r"\b(?:durable water repellent|water-repellent finish|DWR)\b"),
 ]
 
 # Waterproof hydrostatic head, e.g. "20,000 mm" or "20000mm".
@@ -265,12 +263,11 @@ def _extract_specs(text: str, text_lower: str) -> list[dict]:
             specs.append(_spec("Seam sealing", phrase, m.group(0)))
             break
 
-    # DWR finish
-    for phrase in _DWR_SPEC_PHRASES:
-        m = re.search(re.escape(phrase), text, re.IGNORECASE)
-        if m:
-            specs.append(_spec("DWR finish", phrase, m.group(0)))
-            break
+    # DWR finish — canonical value normalized ("DWR" / "PFAS-free DWR" / "PFC-free
+    # DWR"); matched_text keeps the exact source phrase (m.group(0)).
+    dwr = _first_term_spec("Water-repellent finish", text, _DWR_SPEC_TERMS)
+    if dwr:
+        specs.append(dwr)
 
     # Waterproof rating (mm)
     m = re.search(_WATERPROOF_MM_PATTERN, text, re.IGNORECASE)
