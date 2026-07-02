@@ -24,29 +24,47 @@
 
 # 06 · Claude Code — Next Task
 
-## Objective
-Prices in non-USD currencies (CAD first) are scored against USD benchmarks,
-so a $498 CAD item is judged as if it were $498 USD and called "fairly priced."
-Make price scoring currency-aware.
+## Task: price currency preservation (detection only, no scoring change)
 
-## Context
-Found from real-retailer testing. Reigning Champ GORE-TEX Rival, $498 CAD,
-scored against the USD benchmark range and displayed roughly "$501, fairly
-priced." $498 CAD is about $365 USD. Affects every Canadian-priced page, which
-is most of my own test set. This is the app-wide version of the currency bug
-previously noted in the Option B swimwear work.
+Problem:
+_parse_price strips everything but digits, so CA$150, US$150, £150 and €150 all
+collapse to 150 and score against the US benchmark table. The GPT prompts also
+tell the model to return price with no currency symbol, throwing currency away
+even when the page has it.
 
-## Files likely affected
-scoring/price_benchmarks.py (evaluate_price_pressure), the extractor where
-price/currency is parsed, possibly engine.py where price flows in.
+Goal:
+Preserve original amount, currency, and raw price string. Do not change any
+scoring behavior yet. This commit is plumbing only.
 
-## Open questions before scoping
-- Where does currency get detected? Is it captured at extraction today or lost?
-- Convert to USD at scan time, or store benchmarks per currency?
-- Static conversion rate or a live source? (Static is fine for v1.)
+Scope:
+1. Parser returns amount, currency, and raw_price string. Detect currency from
+   explicit markers in the string only: CAD / CA$ / C$, USD / US$, AUD / AU$,
+   GBP / £, EUR / €.
+2. Also capture currency from structured metadata already being read (JSON-LD
+   priceCurrency, meta price:currency / og:price:currency), at the same point the
+   extractor already reads meta price. This is nearly free since that path exists.
+3. Update the text and image GPT prompts to ask for "currency":
+   "USD|CAD|AUD|GBP|EUR|null" alongside price. Remove the "no currency symbol"
+   instruction that forces the model to discard it.
+4. Preserve amount / currency / raw_price in result_dict for debugging and future UI.
+5. Do not change which numeric price is passed into scoring. score_item still gets
+   the bare amount. Scores for any given item must be identical to before this commit.
+6. Plain "$150" with no symbol and no structured currency source parses to
+   amount 150, currency null. Do not default to USD.
+7. Do not infer currency from domain (.ca), locale, or Shopify settings in this
+   task. That resolution layer belongs to the benchmark-policy task.
 
-## Tests to run
-python -m scoring.tests
+Tests:
+- CA$150 -> amount 150, currency CAD
+- US$150 -> amount 150, currency USD
+- £150   -> amount 150, currency GBP
+- €150   -> amount 150, currency EUR
+- AU$150 -> amount 150, currency AUD
+- plain "$150" -> amount 150, currency null
+- one known item scores identically to before (metadata added, score unchanged)
 
-## Do not change
-Not yet scoped. This needs its own session before handing to Claude Code.
+Do not:
+- convert currencies or add live FX
+- create CAD benchmark ranges
+- build domain / locale currency inference
+- change price pressure, construction floors, cost-per-wash, verdicts, or card copy

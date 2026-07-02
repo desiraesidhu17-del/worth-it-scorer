@@ -74,3 +74,11 @@ Brand construction grades are soft and unsourced, and the A/B/C grade table was
 already kept off the methodology page for that reason. Same grades currently
 show as notes on cards. Open: keep visible, hide, or let them affect score
 quietly without displaying copy. Decide separately, not inside a bug fix.
+
+## Benchmark policy for non-US currencies
+Open. Once currency detection ships, decide what happens when a detected currency
+has no matching benchmark table. Two paths: build sourced CAD benchmark ranges
+(CAD is the priority since it's the main test market), or mark CAD price-fit as
+"benchmark basis limited" until those ranges exist. Gate this on a 10 to 20 page
+Canadian audit: how often does the app actually capture a currency, and what does
+the real CAD price and tier spread look like. Do not fabricate ranges to decide this.

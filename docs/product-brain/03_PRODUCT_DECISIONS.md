@@ -35,3 +35,22 @@ than a possibly-wrong one. No-note is the safe failure for a trust tool.
 DWR display normalization (done, commit b2830f6 area), brand lookup false
 positives (done), CAD/USD currency (next, own session). Fixed as three
 separate commits, not bundled.
+
+## Bug 3: price currency handling
+Decided 2026-07-02.
+
+Bug 3 is not a shopper currency-conversion feature. It is a benchmark
+market-alignment bug. The app currently strips currency off every price, so
+CA$150, US$150, £150 and €150 all score against the same US benchmark table.
+
+Rules:
+- Prices stay as listed. The app does not convert the shopper-facing price into
+  another currency, and does not assume the shopper wants a home-currency conversion.
+- Currency is captured and used internally only, to pick the right benchmark basis.
+- Do not FX-normalize a foreign price into the US table. Converting CA$150 to
+  ~US$106 and grading it against US benchmarks just swaps one bias for another and
+  hides a guess inside a number that looks precise. That breaks the receipts pitch.
+- If no benchmark basis matches the detected currency, lower price-fit confidence
+  instead of pretending the comparison is as strong as US price on US benchmark.
+- CAD is the first non-US market to get real benchmarks, but the ranges get sourced
+  the same way the US ranges were. Claude Code does not invent CAD ranges.
