@@ -61,3 +61,16 @@ This should not replace the current Worth It scorer. The scorer should come firs
 ### Do not build yet
 
 Do not build full discovery, product search, user profiles, or recommendations until the scorer/card trust layer is stronger.
+
+## Revolve and marketplace-vs-maker attribution
+The extractor can pull the retailer ("Revolve") as the brand on a page for a
+product Revolve only hosts (e.g. a Halfdays jacket), so the marketplace's
+construction grade lands on someone else's item. This is an extraction/source
+problem, not a fuzzy-match bug. Needs a separate rule later: don't treat the
+seller as the maker unless the brand field clearly identifies the product brand.
+
+## Should brand priors be visible on cards at all?
+Brand construction grades are soft and unsourced, and the A/B/C grade table was
+already kept off the methodology page for that reason. Same grades currently
+show as notes on cards. Open: keep visible, hide, or let them affect score
+quietly without displaying copy. Decide separately, not inside a bug fix.

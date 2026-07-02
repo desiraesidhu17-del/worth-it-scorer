@@ -15,3 +15,23 @@
 - **Brand ownership context does not affect the score.** If shown at all, it belongs under
   build confidence as a context note, never as a score input.
 - **Discovery is not built now.** Scorer first, discovery later.
+
+
+Two real decisions came out of this work that aren't written down:
+
+- **Never invent a spec value.** Only show specs actually found on the page (value-anchored).
+- **The comparison frame must match the garment.** A rain shell is never told to compare on insulation; unknown types fall back to a generic prompt. This is a stated correctness guarantee now.
+
+The "low material score + 'fairly priced' reads contradictory" tension appears in **four** places (dashboard, roadmap, card spec, and CLAUDE.md known issues) but has never been decided. It's your oldest unresolved product question. Either promote it to an active task with a target resolution, or make a decision about how the two labels should coexist.
+
+## Brand lookup: exact match, not substring (accepted)
+lookup_brand now normalizes then requires exact equality, no substring or
+word-boundary partial matching. Deliberate, because "gap", "cos", "equipment"
+are real English words that a partial match misfires on. Tradeoff accepted:
+a decorated brand field like "Gap Official Store" now returns no note rather
+than a possibly-wrong one. No-note is the safe failure for a trust tool.
+
+## Three-bug sequence from real-retailer testing (accepted)
+DWR display normalization (done, commit b2830f6 area), brand lookup false
+positives (done), CAD/USD currency (next, own session). Fixed as three
+separate commits, not bundled.

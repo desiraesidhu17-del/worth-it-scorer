@@ -18,3 +18,10 @@
   different axes and should never blur into one number that reads as a single "quality" verdict.
 - The card should help a **non-expert shopper make a decision quickly** — outcome first,
   evidence second.
+
+
+`02_CURRENT_CARD_SPEC.md` describes only the _normal_ card. The technical panel that just shipped is invisible in your product brain. Add a short "Technical gear variant" section:
+
+- When it triggers (2+ technical signals detected)
+- The hierarchy: headline "Technical performance gear" → **type-aware comparison subline** → spec rows → "Compare next:" line
+- What's suppressed and why (numeric score, price fit, cost-per-wear — because fiber score isn't the value driver)

@@ -22,3 +22,5 @@ Card clarity + resolving the verdict/price-label messaging tension (low material
 - [06 · Claude Code Next Task](06_CLAUDE_CODE_NEXT_TASK.md)
 - [01 · Product Mission](01_PRODUCT_MISSION.md)
 - Engineering source of truth: [`/CLAUDE.md`](../../CLAUDE.md)
+
+ says the priority is "card clarity" but nothing defines when it's achieved. Without a bar (even a subjective one — "a non-expert can state the verdict + the main tradeoff in 5 seconds"), the phase can't close.
