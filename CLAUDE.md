@@ -94,6 +94,10 @@ scoring/
   verdict_library.py       HEADLINE_MATRIX (25-entry), get_headline(), get_watch_for()
   technical_signals.py     detect_technical_signals() — 6 categories, is_technical at 2+
   fiber_properties.py      Per-fiber scores + per-category CATEGORY_WEIGHTS
+  fiber_vocab.py           Fiber aliases, canonical names, known fibers
+  blend_interactions.py    Blend adjustment deltas for common fiber pairs
+  price_benchmarks.py      US-market category + material-tier price ranges
+  brand_db.py              Brand construction prior database + lookup
   test_extractor.py        39 extractor tests
   test_verdict.py          15 verdict tests (headline + watch_for)
   tests.py                 35 engine integration tests (incl. 8 verdict_bucket tests)
