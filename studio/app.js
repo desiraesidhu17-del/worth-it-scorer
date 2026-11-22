@@ -34,7 +34,7 @@
   const ATTRIBUTES = ["silhouette", "neckline", "material", "colour"];
   const KEY = "barefax.studio.demo-finds.v1";
 
-  let state = { seedId: "everyday", keep: ["silhouette", "neckline"], mode: "close", turn: 0 };
+  let state = { seedId: "everyday", keep: ["silhouette"], mode: "close", turn: 0 };
   let history = [];
   let saved = readSaved();
   let compareSelection = [];
@@ -94,7 +94,7 @@
   }
 
   function reset() {
-    update(() => { state = { seedId: "everyday", keep: ["silhouette", "neckline"], mode: "close", turn: 0 }; });
+    update(() => { state = { seedId: "everyday", keep: ["silhouette"], mode: "close", turn: 0 }; });
   }
 
   function garmentSVG(product) {
@@ -210,8 +210,8 @@
     const keptLabels = state.keep.length ? state.keep.join(", ") : "no fixed details";
     const allCount = PRODUCTS.filter((p) => p.id !== state.seedId && matches(p, productById(state.seedId))).length;
     $("#result-explanation").textContent = `${allCount} of 11 sample alternatives match ${keptLabels}. Showing ${results.length}.`;
-    $("#reshuffle").disabled = allCount < 2;
-    $("#reshuffle").title = allCount < 2 ? "No other matching options to rotate" : "Rotate the sample selection";
+    $("#reshuffle").disabled = allCount <= 4;
+    $("#reshuffle").title = allCount <= 4 ? "All matching sample options are already visible" : "Rotate the sample selection";
   }
 
   function renderRack() {
