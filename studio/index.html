@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Barefax Studio — an experiment in shopping differently</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to discovery</a>
+  <div class="site-shell">
+    <header class="masthead">
+      <a class="brand" href="./index.html" aria-label="Barefax Studio home">barefax<span class="brand-dot">.</span></a>
+      <span class="masthead-center">A SMALL EXPERIMENT IN SHOPPING DIFFERENTLY</span>
+      <button type="button" class="saved-trigger" id="open-saved" aria-haspopup="dialog">
+        <span class="icon-heart" aria-hidden="true">♡</span> My finds <span class="count" id="saved-count">0</span>
+      </button>
+    </header>
+
+    <main id="main">
+      <section class="intro">
+        <div class="eyebrow"><span class="eyebrow-mark"></span> DISCOVERY STUDIO / NO. 01</div>
+        <h1>Keep what you love.<br><em>Change the rest.</em></h1>
+        <div class="intro-bottom">
+          <p>Shopping should feel like finding your taste, not getting lost in options. Start with a cardigan. Tell us which details you want to keep. See where the idea takes you.</p>
+          <div class="proof-pill">Made for curious shoppers, not endless scrolling <span aria-hidden="true">↗</span></div>
+        </div>
+      </section>
+
+      <div class="demo-notice" role="note">
+        <span class="demo-label">PLAYGROUND</span>
+        <span>These are <strong>illustrated sample pieces</strong>, not live products or verified material claims. Nothing here is for sale.</span>
+      </div>
+
+      <section class="workspace" aria-label="Your discovery workspace">
+        <div class="main-study">
+          <div class="section-head"><span>01 / YOUR STARTING POINT</span><span>AN IDEA TO EXPLORE</span></div>
+          <div class="hero-card">
+            <div class="hero-visual" id="hero-art" aria-hidden="true"></div>
+            <div class="hero-details">
+              <div class="mini-eyebrow">CURRENT INSPIRATION <span aria-hidden="true">✳</span></div>
+              <h2 id="hero-name">The Everyday</h2>
+              <p id="hero-description">A considered starting point.</p>
+              <div class="detail-grid" id="hero-details"></div>
+              <button class="text-link" id="change-seed" type="button">Choose a different starting piece <span aria-hidden="true">↗</span></button>
+            </div>
+          </div>
+        </div>
+
+        <aside class="refinement" aria-labelledby="refine-heading">
+          <div class="section-head"><span>02 / MAKE IT YOURS</span><span>YOUR CALL</span></div>
+          <div class="refine-inner">
+            <div class="tiny-icon" aria-hidden="true">✳</div>
+            <h2 id="refine-heading">What stays?</h2>
+            <p>Pick the details that matter. We'll keep those constant and explore different versions of everything else.</p>
+            <div class="keep-controls" id="keep-controls" role="group" aria-label="Features to preserve">
+              <button class="keep-chip" type="button" data-keep="silhouette" aria-pressed="true">Silhouette <span aria-hidden="true">✓</span></button>
+              <button class="keep-chip" type="button" data-keep="neckline" aria-pressed="false">Neckline <span aria-hidden="true">✓</span></button>
+              <button class="keep-chip" type="button" data-keep="material" aria-pressed="false">Material <span aria-hidden="true">+</span></button>
+              <button class="keep-chip" type="button" data-keep="colour" aria-pressed="false">Colour <span aria-hidden="true">+</span></button>
+            </div>
+
+            <div class="fine-rule"></div>
+            <h3>How adventurous?</h3>
+            <div class="mode-switch" role="group" aria-label="Discovery direction">
+              <button type="button" data-mode="close" class="mode-button" aria-pressed="true">Close to my idea</button>
+              <button type="button" data-mode="surprise" class="mode-button" aria-pressed="false">Surprise me</button>
+            </div>
+            <div class="refine-actions">
+              <button class="button-quiet" type="button" id="undo" disabled>↶ Undo</button>
+              <button class="button-quiet" type="button" id="reset">Start fresh</button>
+            </div>
+          </div>
+          <div class="refine-note">You decide what matters. The app follows your lead.</div>
+        </aside>
+      </section>
+
+      <section class="alternatives" id="alternatives" aria-labelledby="alternatives-heading">
+        <div class="results-header">
+          <div>
+            <div class="section-head"><span>03 / EXPLORE THE POSSIBILITIES</span></div>
+            <h2 id="alternatives-heading">A few new directions<span class="period">.</span></h2>
+            <p id="result-explanation" aria-live="polite">Keeping your chosen details in mind.</p>
+          </div>
+          <button type="button" id="reshuffle" class="shuffle-button">↻ Mix up the selection</button>
+        </div>
+        <div id="results" class="product-grid" aria-live="polite"></div>
+        <div id="empty-results" class="empty-message" hidden>
+          <span class="empty-star" aria-hidden="true">✳</span>
+          <h3>That's a very specific vision.</h3>
+          <p>No other sample piece has every detail you asked to keep. Unselect one detail to see more options—we won't quietly ignore your choices.</p>
+        </div>
+        <div class="method-note"><span aria-hidden="true">◎</span> Prototype matching uses only the sample attributes. It does <strong>not</strong> measure actual fit, quality, stock, or price.</div>
+      </section>
+
+      <section class="inspiration" id="inspiration" aria-labelledby="inspiration-heading">
+        <div class="section-head"><span>THE EXPERIMENTAL RACK</span><span>12 DIFFERENT TAKES</span></div>
+        <div class="inspiration-top">
+          <h2 id="inspiration-heading">Start somewhere else<span class="period">.</span></h2>
+          <p>A different starting point can take you somewhere unexpected.</p>
+        </div>
+        <div class="rack-grid" id="rack"></div>
+      </section>
+
+      <section class="closer">
+        <span class="closer-star" aria-hidden="true">✳</span>
+        <p>Good shopping isn't about finding <em>more</em> things.<br>It's about knowing what feels <em>right.</em></p>
+        <a class="text-link" href="https://github.com/desiraesidhu17-del/worth-it-scorer" target="_blank" rel="noopener noreferrer">Explore the project on GitHub ↗</a>
+      </section>
+    </main>
+    <footer class="footer"><span>BAREFAX / AN OPEN EXPERIMENT</span><span>YOUR TASTE. YOUR DECISION.</span><span>NO REAL PRODUCTS OR PRICES IN THIS DEMO</span></footer>
+  </div>
+
+  <dialog id="saved-dialog" class="studio-dialog" aria-labelledby="saved-heading">
+    <div class="dialog-heading">
+      <div><span class="mini-eyebrow">YOUR LITTLE COLLECTION</span><h2 id="saved-heading">Things worth keeping.</h2></div>
+      <button type="button" class="close-dialog" data-close="saved-dialog" aria-label="Close saved finds">✕</button>
+    </div>
+    <p class="dialog-help">Saved on this browser only. Nothing is uploaded or shared. Choose two or three pieces to compare their demo attributes.</p>
+    <div id="saved-items" class="saved-items"></div>
+    <div class="dialog-actions">
+      <button type="button" id="compare-saved" class="button-primary" disabled>Compare selected</button>
+      <button type="button" data-close="saved-dialog" class="button-secondary">Back to exploring</button>
+    </div>
+  </dialog>
+
+  <dialog id="compare-dialog" class="studio-dialog compare-dialog" aria-labelledby="compare-heading">
+    <div class="dialog-heading">
+      <div><span class="mini-eyebrow">SIDE BY SIDE</span><h2 id="compare-heading">See what changes.</h2></div>
+      <button type="button" class="close-dialog" data-close="compare-dialog" aria-label="Close comparison">✕</button>
+    </div>
+    <div id="comparison" class="comparison-table"></div>
+    <p class="dialog-help">This is an attribute comparison of fictional examples, not a product-quality verdict. Later, verified Barefax evidence can live here.</p>
+    <div class="dialog-actions"><button type="button" class="button-primary" data-close="compare-dialog">Keep exploring</button></div>
+  </dialog>
+</body>
+</html>
